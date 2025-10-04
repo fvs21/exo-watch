@@ -78,9 +78,10 @@ export default function IngresarDatos({ setVista }: Props) {
     setErrorMsg(null);
     setLoading(true);
 
+    const API_BASE="http://localhost:8000/api"; // Cambia esto si tu backend está en otra URL
     try {
       // 🔁 Cambia esta URL por tu endpoint real
-      const res = await fetch("/api/predict", {
+      const res = await fetch(`${API_BASE}/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
