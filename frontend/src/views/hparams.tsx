@@ -59,9 +59,27 @@ export default function Hyperparametros({ setVista }: Props) {
   }
 
 
-  const guardar = () => {
-    console.log("Hiperparámetros guardados:", hp);
-    alert("Hiperparámetros listos (revisa la consola).");
+  const guardar = async () => {
+    const API_BASE = "http://localhost:8000/api";
+
+    try {
+      const res = await fetch(`${API_BASE}/model`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(hp), 
+      });
+
+      if (!res.ok) {
+        throw new Error(`Error saving hyperparameters: ${res.statusText}`);
+      }
+
+      alert("Hiperparámetros guardados exitosamente.");
+    } catch (e) {
+      alert("Error al guardar los hiperparámetros.");
+      console.error(e);
+    }
   };
 
   return (
@@ -78,7 +96,6 @@ export default function Hyperparametros({ setVista }: Props) {
           value={hp.random_state}
           onChange={(v) => setVal("random_state", v)}
           remove={() => deleteVal("random_state")}
-
         />
         <Param 
           label="Learning Rate"

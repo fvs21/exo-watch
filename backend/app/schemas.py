@@ -19,7 +19,6 @@ class PredictRequest(BaseModel):
     features: CandidateFeatures
 
 class CreateModelRequest(BaseModel):
-    name: str
     learning_rate: Optional[float] = None
     n_estimators: Optional[int] = None
     num_leaves: Optional[int] = None

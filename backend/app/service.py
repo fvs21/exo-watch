@@ -12,25 +12,29 @@ BASE_ML_MODEL = str(os.path.join(MODELOS, "exoplanet_kepler_model.joblib"))
 def get_model(id: Optional[int]) -> str:
     if id is None:
         return BASE_ML_MODEL
-    
-    conn = sqlite3.connect(os.path.join(BASE_DIR, 'db.sqlite3'))
+
+    conn = sqlite3.connect(os.path.join(BASE_DIR, "app", "db.sqlite3"))
     cursor = conn.cursor()
-    cursor.execute("SELECT model_path FROM models WHERE id = ?", (id,))
+    cursor.execute("SELECT path FROM model WHERE id = ?", (id,))
     row = cursor.fetchone()
     conn.close()
 
     return row[0] if row else BASE_ML_MODEL
 
 def create_model(data: CreateModelRequest) -> int:
-    conn = sqlite3.connect(os.path.join(BASE_DIR, 'db.sqlite3'))
+    conn = sqlite3.connect(os.path.join(BASE_DIR, "app", "db.sqlite3"))
     cursor = conn.cursor()
 
+    params = data.model_dump()
+
+    name = train_and_evaluate_model(params=params)
+
     cursor.execute("""
-        INSERT INTO models (name, model_path, learning_rate, n_estimators, num_leaves, max_depth)
+        INSERT INTO model (name, path, learning_rate, n_estimators, num_leaves, max_depth)
         VALUES (?, ?, ?, ?, ?, ?)
     """, (
-        data.name,
-        os.path.join(MODELOS, f"{data.name.replace(' ', '_').lower()}.joblib"),
+        name,
+        os.path.join(MODELOS, f"{name}.joblib"),
         data.learning_rate,
         data.n_estimators,
         data.num_leaves,
@@ -40,10 +44,5 @@ def create_model(data: CreateModelRequest) -> int:
     conn.commit()
     model_id = cursor.lastrowid
     conn.close()
-
-    params = data.model_dump()
-    del params['name']
-
-    train_and_evaluate_model(params=params)
 
     return model_id
