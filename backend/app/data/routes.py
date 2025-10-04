@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Status
-from . import services
-from app.model.predict import predict_candidate
+from app.data import services
+from ...model.predict import predict_candidate
 from pydantic import BaseModel
-from .serializers import CandidateFeatures
+from schemas import CandidateFeatures
 import pandas as pd
 
 router = APIRouter(prefix="/api", tags=["api"])
@@ -52,3 +52,5 @@ def create(hyperparams: services.HyperParams):
 
 
 @router.post("/change")
+def change_model(req: services.ChangeModel):
+    pass
