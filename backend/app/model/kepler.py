@@ -7,7 +7,6 @@ import joblib
 from typing import Tuple
 import sys
 import xgboost as xgb
-import os
 
 KOI_FEATURES = [
     'koi_period',       # Período Orbital
@@ -23,20 +22,30 @@ KOI_FEATURES = [
     'koi_srad',         # Radio Estelar
 ]
 
-BASE_PATH = os.path.dirname(os.path.dirname(__file__))
-DATA_PATH = os.path.join(BASE_PATH, 'data', 'raw')
-OUTPUTS_PATH = os.path.join(BASE_PATH, 'model', 'outputs')
-
 def load_kepler_data() -> Tuple[pd.DataFrame, pd.Series]:
-    filepath = os.path.join(DATA_PATH, 'koi.csv')
+    filepath = './data/raw/koi.csv' # Asegúrate que la ruta es correcta
     target_column = 'koi_disposition'
 
     df_raw = pd.read_csv(filepath, skiprows=53)
-    
+    # 1. Separa los datos por su disposición original.
+    confirmed_and_candidates = df_raw[df_raw[target_column].isin(['CONFIRMED', 'CANDIDATE'])]
+    false_positives = df_raw[df_raw[target_column] == 'FALSE POSITIVE']
+
+    # 2. Aplica tu condición de filtrado SOLO al DataFrame de Falsos Positivos.
+    # Nos quedamos con los FP donde la flag 'nt' O la flag 'ss' es 1.
+    condition = (false_positives['koi_fpflag_nt'] == 1) | (false_positives['koi_fpflag_ss'] == 1)
+    filtered_false_positives = false_positives[condition]
+
+    # 3. Vuelve a unir los DataFrames: los confirmados/candidatos + los FP filtrados.
+    df_filtered = pd.concat([confirmed_and_candidates, filtered_false_positives])
+    '''
     df_filtered = df_raw[df_raw[target_column].isin(['CONFIRMED', 'FALSE POSITIVE', 'CANDIDATE'])]
-    
+
+
+    print(df_filtered.head())
+'''
     df_clean = df_filtered[KOI_FEATURES + [target_column]].copy()
-    
+
     for col in KOI_FEATURES:
         df_clean[col].fillna(df_clean[col].median(), inplace=True)
 
@@ -46,7 +55,7 @@ def load_kepler_data() -> Tuple[pd.DataFrame, pd.Series]:
     
     return X, y
 
-def use_light_gbm_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None) -> str: #model name
+def use_light_gbm_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None):
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.20, random_state=42, stratify=y
     )
@@ -75,24 +84,16 @@ def use_light_gbm_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None
     print(f"PR-AUC: {pr_auc:.3f}")
     
     # 4. Guardar el modelo entrenado para uso futuro
-    num = os.listdir(OUTPUTS_PATH)
-
-    if len(num) == 0:
-        model_filename = os.path.join(OUTPUTS_PATH, 'exoplanet_kepler_model.joblib')
-    else:
-        model_filename = os.path.join(OUTPUTS_PATH, f'exoplanet_kepler_model_{len(num)+1}.joblib')
-
+    model_filename = 'outputs/exoplanet_kepler_model.joblib'
     joblib.dump(model, model_filename)
     print(f"\nModelo guardado exitosamente como '{model_filename}'")
     
-    '''# 5. Visualizar la importancia de las características
+    # 5. Visualizar la importancia de las características
     lgb.plot_importance(model, max_num_features=11, figsize=(10, 8), 
                         title='Importancia de las Características (LightGBM)')
     plt.tight_layout()
     plt.savefig('feature_importance_kepler.png')
-    print("Gráfico de importancia de características guardado como 'feature_importance_kepler.png'")'''
-
-    return model_filename
+    print("Gráfico de importancia de características guardado como 'feature_importance_kepler.png'")
 
 def use_xg_boost_model(X: pd.DataFrame, y: pd.Series):
     X_train, X_test, y_train, y_test = train_test_split(
@@ -123,8 +124,8 @@ def use_xg_boost_model(X: pd.DataFrame, y: pd.Series):
     print("\nReporte de clasificación:\n", classification_report(y_test, y_pred))
 
     # 5. Visualizar la importancia de las características
-    lgb.plot_importance(model, max_num_features=11, figsize=(10, 8), 
-                        title='Importancia de las Características (XGBoost)')
+    xgb.plot_importance(model)
+    plt.title("XGBoost Feature Importance")
     plt.tight_layout()
     plt.savefig('feature_importance_kepler_xgb.png')
     print("Gráfico de importancia de características guardado como 'feature_importance_kepler_xgb.png'")
@@ -133,9 +134,9 @@ def train_and_evaluate_model(model_type: str = "light_gbm", params: dict = None)
     X, y = load_kepler_data()
     
     if model_type == "light_gbm":
-        return use_light_gbm_model(X, y, model_params=params)
+        use_light_gbm_model(X, y, model_params=params)
     elif model_type == "xgboost":
-        return use_xg_boost_model(X, y, model_params=params)
+        use_xg_boost_model(X, y, model_params=params)
     else:
         raise ValueError("Modelo no soportado. Usa 'light_gbm' o 'xgboost'.")
 
