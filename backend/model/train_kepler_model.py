@@ -48,8 +48,13 @@ def use_light_gbm_model(X: pd.DataFrame, y: pd.Series):
 
     model = lgb.LGBMClassifier(
         random_state=42,
-        learning_rate=0.10,
-        n_estimators=2000
+        learning_rate=0.05,
+        n_estimators=2000,
+        scale_pos_weight=(y_train.value_counts()[0] / y_train.value_counts()[1]),
+        num_leaves=40,
+        feature_fraction=0.8,
+        lambda_l1=0.1,
+        lambda_l2=0.1,
     )
 
     model.fit(X_train, y_train)

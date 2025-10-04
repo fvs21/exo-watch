@@ -1,6 +1,7 @@
 import pandas as pd
 import joblib
 import sys
+import csv
 
 KOI_FEATURES = [
     ('koi_period', 'tce_period'),       # Período Orbital
@@ -42,26 +43,37 @@ def predict_candidate(model_path, candidate_features):
     print(f"Clasificación: {verdict}")
     print(f"Confianza: {confidence * 100:.2f}%")
 
+    return verdict, confidence
+
 def main():
     """Función principal para probar la predicción con un candidato de ejemplo."""
 
-    if len(sys.argv) < 2:
-        print("Uso: python predict.py [kepid]")
-        sys.exit(1)
-
-    kepid = int(sys.argv[1])
-
     raw = pd.read_csv("./data/raw/events.csv", skiprows=32)
-
-    signal = raw[raw['kepid'] == kepid]
-    first = signal.iloc[0].to_dict()
-
-    nuevo_candidato = { k1: first[k2] for k1, k2 in KOI_FEATURES }
-    
-    # Ruta al modelo guardado
     MODEL_FILE = 'exoplanet_kepler_model.joblib'
-    
-    predict_candidate(MODEL_FILE, nuevo_candidato)
+    csvfile = open('predictions.csv', 'w', newline='')
+    csvwriter = csv.writer(csvfile)
+    csvwriter.writerow(['kepid', 'verdict', 'confidence'])
+
+    if len(sys.argv) < 2:
+        for row in raw.iterrows():
+            first = row[1].to_dict()
+            nuevo_candidato = { k1: first[k2] for k1, k2 in KOI_FEATURES }
+            print(f"\nProbando candidato con kepid={first['kepid']}")
+            verdict, confidence = predict_candidate(MODEL_FILE, nuevo_candidato)
+            csvwriter.writerow([first['kepid'], verdict, f"{confidence * 100:.2f}%"])
+            print("-" * 30)
+
+        csvfile.close()
+
+    else:
+        kepid = int(sys.argv[1])
+
+        signal = raw[raw['kepid'] == kepid]
+        first = signal.iloc[0].to_dict()
+
+        nuevo_candidato = { k1: first[k2] for k1, k2 in KOI_FEATURES }
+        
+        predict_candidate(MODEL_FILE, nuevo_candidato)
 
 
 if __name__ == '__main__':
