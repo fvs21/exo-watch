@@ -1,5 +1,20 @@
 import pandas as pd
 import joblib
+import sys
+
+KOI_FEATURES = [
+    ('koi_period', 'tce_period'),       # Período Orbital
+    ('koi_time0bk', 'tce_time0bk'),      # Época del Tránsito
+    ('koi_impact', 'tce_impact'),       # Parámetro de Impacto
+    ('koi_duration', 'tce_duration'),     # Duración del Tránsito
+    ('koi_depth', 'tce_depth'),        # Profundidad del Tránsito
+    ('koi_prad', 'tce_prad'),         # Radio Planetario
+    ('koi_teq', 'tce_eqt'),          # Temperatura de Equilibrio
+    ('koi_insol', 'tce_insol'),        # Flujo de Insolación
+    ('koi_model_snr', 'tce_model_snr'),    # Relación Señal a Ruido del Tránsito
+    ('koi_steff', 'tce_steff'),        # Temperatura Estelar Efectiva
+    ('koi_srad', 'tce_sradius'),         # Radio Estelar
+]
 
 def predict_candidate(model_path, candidate_features):
     """Carga un modelo entrenado y predice la clasificación de un nuevo candidato."""
@@ -20,31 +35,37 @@ def predict_candidate(model_path, candidate_features):
     prediction_proba = model.predict_proba(candidate_df)[0]
     
     # Interpreta los resultados
-    verdict = 'CONFIRMED' if prediction_code == 1 else 'FALSE POSITIVE'
-    confidence = prediction_proba[1] if verdict == 'CONFIRMED' else prediction_proba[0]
+    verdict = 'CANDIDATE' if prediction_code == 1 else 'FALSE POSITIVE'
+    confidence = prediction_proba[1] if verdict == 'CANDIDATE' else prediction_proba[0]
     
     print("\n--- Veredicto del Modelo ---")
     print(f"Clasificación: {verdict}")
     print(f"Confianza: {confidence * 100:.2f}%")
 
-if __name__ == '__main__':
-    # Define las características de un candidato hipotético para probar
-    # Estos son los datos de un planeta CONFIRMADO real (Kepler-186 f)
-    nuevo_candidato = {
-        'koi_period': 129.944,
-        'koi_time0bk': 170.536,
-        'koi_impact': 0.721,
-        'koi_duration': 5.89,
-        'koi_depth': 434.0,
-        'koi_prad': 1.17,
-        'koi_teq': 188,
-        'koi_insol': 0.29,
-        'koi_model_snr': 16.2,
-        'koi_steff': 3788,
-        'koi_srad': 0.52
-    }
+def main():
+    """Función principal para probar la predicción con un candidato de ejemplo."""
+
+    if len(sys.argv) < 2:
+        print("Uso: python predict.py [kepid]")
+        sys.exit(1)
+
+    kepid = int(sys.argv[1])
+
+    raw = pd.read_csv("./data/raw/events.csv", skiprows=32)
+
+    signal = raw[raw['kepid'] == kepid]
+    first = signal.iloc[0].to_dict()
+
+    nuevo_candidato = { k1: first[k2] for k1, k2 in KOI_FEATURES }
     
     # Ruta al modelo guardado
     MODEL_FILE = 'exoplanet_kepler_model.joblib'
     
     predict_candidate(MODEL_FILE, nuevo_candidato)
+
+
+if __name__ == '__main__':
+    # Define las características de un candidato hipotético para probar
+    # Estos son los datos de un planeta CONFIRMADO real (Kepler-186 f)
+
+    main()

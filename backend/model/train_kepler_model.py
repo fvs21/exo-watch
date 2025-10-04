@@ -4,7 +4,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, precision_recall_curve, auc
 import matplotlib.pyplot as plt
 import joblib
-
+from typing import Tuple
+import sys
+import xgboost as xgb
 
 KOI_FEATURES = [
     'koi_period',       # Período Orbital
@@ -20,7 +22,7 @@ KOI_FEATURES = [
     'koi_srad',         # Radio Estelar
 ]
 
-def load_kepler_data():
+def load_kepler_data() -> Tuple[pd.DataFrame, pd.Series]:
     filepath = './data/raw/koi.csv' # Asegúrate que la ruta es correcta
     target_column = 'koi_disposition'
 
@@ -39,19 +41,15 @@ def load_kepler_data():
     
     return X, y
 
-def main():
-    """Función principal para entrenar y evaluar el modelo.""" 
-    X, y = load_kepler_data()
-
-    # 1. Dividir los datos en entrenamiento y prueba
+def use_light_gbm_model(X: pd.DataFrame, y: pd.Series):
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.25, random_state=42, stratify=y
+        X, y, test_size=0.20, random_state=42, stratify=y
     )
-    
-    # 2. Crear y entrenar el modelo LightGBM
-    print("\nEntrenando el modelo LightGBM...")
+
     model = lgb.LGBMClassifier(
-        random_state=42
+        random_state=42,
+        learning_rate=0.10,
+        n_estimators=2000
     )
 
     model.fit(X_train, y_train)
@@ -86,6 +84,57 @@ def main():
     plt.tight_layout()
     plt.savefig('feature_importance_kepler.png')
     print("Gráfico de importancia de características guardado como 'feature_importance_kepler.png'")
+
+def use_xg_boost_model(X: pd.DataFrame, y: pd.Series):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.25, random_state=42, stratify=y
+    )
+
+    model = xgb.XGBClassifier(
+        objective="binary:logistic",
+        eval_metric="auc",
+        n_estimators=2000,
+        learning_rate=0.02,
+        max_depth=8,           # deeper trees
+        subsample=0.8,
+        colsample_bytree=0.8,
+        scale_pos_weight=(y_train.value_counts()[0] / y_train.value_counts()[1]),
+        reg_lambda=1.0,        # L2 regularization
+        reg_alpha=0.1,         # L1 regularization
+        random_state=42,
+        n_jobs=-1
+    )
+
+    model.fit(X_train, y_train, eval_set=[(X_test, y_test)])
+
+    y_pred = model.predict(X_test)
+    y_proba = model.predict_proba(X_test)[:,1]
+
+    model_filename = 'exoplanet_kepler_model_xgb.joblib'
+
+    print("ROC-AUC:", roc_auc_score(y_test, y_proba))
+    print("\nReporte de clasificación:\n", classification_report(y_test, y_pred))
+
+    # 5. Visualizar la importancia de las características
+    lgb.plot_importance(model, max_num_features=11, figsize=(10, 8), 
+                        title='Importancia de las Características (XGBoost)')
+    plt.tight_layout()
+    plt.savefig('feature_importance_kepler_xgb.png')
+    print("Gráfico de importancia de características guardado como 'feature_importance_kepler_xgb.png'")
+
+def main():
+    """Función principal para entrenar y evaluar el modelo.""" 
+    if len(sys.argv) == 1:
+        model_to_use = "light_gbm"
+    else:
+        model_to_use = sys.argv[1]
+
+    X, y = load_kepler_data()
+
+    if model_to_use == "light_gbm":
+        use_light_gbm_model(X, y)
+    else:
+        use_xg_boost_model(X, y)
 
 if __name__ == '__main__':
     main()
