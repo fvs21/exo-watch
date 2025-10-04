@@ -26,6 +26,15 @@ def predict_candidate(model_path, candidate_features):
         print(f"Error: No se encontró el archivo del modelo en '{model_path}'")
         print("Asegúrate de ejecutar 'train_model.py' primero.")
         return
+    
+    # Convierte los valores numéricos que vengan como string
+    for k, v in candidate_features.items():
+        try:
+            candidate_features[k] = float(v)
+        except (ValueError, TypeError):
+            pass  # deja el valor tal cual si no puede convertirse
+
+    candidate_df = pd.DataFrame([candidate_features])
 
     # Convierte las características del candidato en un DataFrame de Pandas
     # Es crucial que los nombres de las columnas coincidan con los del entrenamiento
