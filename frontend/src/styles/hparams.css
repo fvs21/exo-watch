@@ -1,0 +1,96 @@
+/* ===== Estilos para Hyperparametros ===== */
+
+/* contenedor principal del form */
+.sectionParams {
+  display: flex;
+  margin: auto;
+  justify-content: center;
+  flex-direction: column;
+  width: 60%;
+}
+/* filas de dos columnas */
+.row2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .row2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* inputs ya usan .input global de app.css
+   aquí afinamos solo detalles visuales */
+.form .input,
+.form .file {
+  background: #0d1324;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text);
+  transition: border 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form .input:focus,
+.form .file:focus {
+  border-color: var(--nasa-blue);
+  box-shadow: 0 0 0 4px rgba(11, 61, 145, 0.18);
+}
+
+/* panel de parámetros */
+.panel {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+/* bloque de previsualización */
+.previewWrap {
+  margin-top: 20px;
+}
+
+.previewWrap h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.preview {
+  background: #0f1117;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* botón de guardar y volver (usa .btn global) */
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* badge superior */
+.badge strong {
+  color: var(--nasa-blue);
+}
+
+.headerParams {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.formParams {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}

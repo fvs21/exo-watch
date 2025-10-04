@@ -1,0 +1,132 @@
+/* ===== IngresarDatos (layout específico) ===== */
+
+/* Fila del selector de modelo */
+.modelRow {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.dataRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: space-between;
+}
+/* Grilla de inputs */
+.inputsGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1024px) {
+  .inputsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .inputsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tarjeta contenedora de cada campo */
+.card {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+  padding: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.06s ease;
+}
+.card:hover {
+  border-color: rgba(106, 140, 255, 0.55); /* var(--primary) suave */
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1px);
+}
+
+/* Ajustes de inputs numéricos (sin spinners, coherente con estilo sobrio) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Encabezado de la vista (usa .header global; afinamos solo detalles) */
+.container > .header .badge {
+  gap: 6px;
+  background: #0f1117;
+  border-color: var(--border);
+}
+
+/* Botonera inferior de la vista (ya existe .actions y .btn en app.css) */
+.container .actions {
+  position: sticky;
+  bottom: 0;
+  padding-top: 10px;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.06));
+}
+
+/* Accesibilidad: enfoque claro en tarjetas e inputs dentro de esta vista */
+.inputsGrid .input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(106, 140, 255, 0.15);
+}
+.card:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(106, 140, 255, 0.12);
+}
+
+/* Etiquetas dentro de tarjetas (usa .label global; refuerzo mínimo) */
+.card .label {
+  margin-bottom: 8px;
+}
+
+/* Opcional: microayuda debajo de inputs (si llegas a usar <small>) */
+.card small.hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  opacity: 0.95;
+}
+
+.sectionData {
+  display: flex;
+  margin: auto;
+  justify-content: center;
+  flex-direction: column;
+  width: 70%;
+}
+
+.fileSelector {
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #222636, #1a1d28);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.06s ease, filter 0.12s ease, border 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.fileSelector:hover {
+  border-color: #4f6fe8;
+}
+
+.labelData {
+  display: flex; /* lo fuerza a ocupar toda la línea */
+  padding: auto;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.kicker {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%; /* ocupa todo el ancho disponible */
+}
