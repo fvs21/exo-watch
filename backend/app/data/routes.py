@@ -4,33 +4,39 @@ from ...model.predict import predict_candidate
 from pydantic import BaseModel
 from schemas import CandidateFeatures
 import pandas as pd
+from . import service
+from fastapi import UploadFile
 
 router = APIRouter(prefix="/api", tags=["api"])
 
 #---Predict endpoint---
-@router.get("/predict")
+@router.post("/predict")
 def predict(features: CandidateFeatures):
-    MODEL_PATH=services.CURRENT_MODEL_PATH #define la ruta del modelo
+    features_dict = features.model_dump()
 
-    features_dict=features.model_dump()
+    model_path = service.get_model(features_dict.get("model"))
     
-    prediction = predict_candidate(MODEL_PATH, features_dict)
+    prediction = predict_candidate(model_path, features_dict)
+    
     if prediction is None:
         raise HTTPException(status_code=500, detail="La predicción falló.")
 
-    return {"status": "success", "input":features_dict, "prediction": prediction} #retorna {"status": "success", "input":features_dict, "prediction": prediction}
+    return {"status": "success", "input":features_dict, "prediction": prediction}
 
-@router.get("/predict_csv")
-def predict_csv(file_path: str):
-    MODEL_PATH="RUTA DEL MODELO" #define la ruta del modelo
+@router.post("/predict_csv")
+def predict_csv(file: UploadFile, model: int = None):
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="El archivo debe ser un archivo CSV.")
+
+    model_path = service.get_model(model)
 
     try:
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file.file)
         features_list = df.to_dict(orient='records')
         
         predictions = []
         for features in features_list:
-            prediction = predict_candidate(MODEL_PATH, features)
+            prediction = predict_candidate(model_path, features)
             if prediction is None:
                 raise HTTPException(status_code=500, detail="La predicción falló para una de las filas.")
             predictions.append(prediction)
@@ -48,9 +54,3 @@ def create(hyperparams: services.HyperParams):
         return {"status": "success", "message": "Datos creados exitosamente."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
-@router.post("/change")
-def change_model(req: services.ChangeModel):
-    pass
