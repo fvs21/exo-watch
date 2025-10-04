@@ -1,8 +1,7 @@
 '''aqui se supone que debe de ir el bakend'''
 from fastapi import FastAPI
-from app.data import routes
+from . import routes
 from fastapi.middleware.cors import CORSMiddleware
-
 
 app = FastAPI()
 
@@ -21,6 +20,3 @@ app.add_middleware(
 
 app.include_router(routes.router)
 
-@app.get("/")
-def root():
-    return {"Status":"Allokay"}

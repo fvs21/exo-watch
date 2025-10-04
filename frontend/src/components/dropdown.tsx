@@ -3,9 +3,8 @@ import "../styles/dropdown.css";
 
 type Props = {
   options: string[];
-  value: string | null;
-  onChange: (next: string) => void;
-  placeholder?: string;
+  value: number | null;
+  onChange: (next: number) => void;
   onAction?: () => void; // opcional
   actionLabel?: string; // opcional (por defecto "Ir a otra página")
   onAdd?: () => void; // opcional
@@ -15,7 +14,6 @@ export default function Dropdown({
   options,
   value,
   onChange,
-  placeholder = "Selecciona...",
   onAction,
   actionLabel = "Ir a otra página",
   onAdd,
@@ -67,7 +65,7 @@ export default function Dropdown({
     if (e.key === "Enter") {
       e.preventDefault();
       if (focusIdx >= 0 && focusIdx < options.length) {
-        onChange(options[focusIdx]);
+        onChange(focusIdx);
         setOpen(false);
         setFocusIdx(-1);
       }
@@ -92,7 +90,7 @@ export default function Dropdown({
         }}
         className="dropdown__btn"
       >
-        {value ?? placeholder}
+        {options[value ?? 0]}
         <span className="dropdown__caret">▼</span>
       </button>
 
@@ -103,17 +101,16 @@ export default function Dropdown({
           className="dropdown__list"
         >
           {options.map((op, idx) => {
-            const selected = op === value;
             const focused = idx === focusIdx;
+
             return (
               <li
                 key={op}
                 role="option"
-                aria-selected={selected}
                 tabIndex={-1}
                 onMouseEnter={() => setFocusIdx(idx)}
                 onClick={() => {
-                  onChange(op);
+                  onChange(idx);
                   setOpen(false);
                   setFocusIdx(-1);
                 }}
@@ -155,7 +152,7 @@ export default function Dropdown({
                 className="btn"
                 style={{ width: "100%" }}
               >
-                ➕ Añadir
+                ➕ Add
               </button>
             </li>
           )}

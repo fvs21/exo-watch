@@ -11,28 +11,27 @@ function MainPage({ setVista }: { setVista: (v: Vista) => void }) {
     <section className="hero" role="banner">
       <div className="hero__backdrop" />
       <div className="container hero__content">
-        <div className="kicker">Misión: Ciencia de Datos</div>
+        <div className="kicker">Mision: Data Science</div>
         <h1 className="hero__title">
-          Detección de <span className="accent">exoplanetas</span> asistida por
-          IA
+          ML exoplanet detection
         </h1>
         <p className="hero__subtitle">
-          Carga un CSV, ajusta tu modelo y genera sistemas estelares simulados.
-          Visualiza métricas clave y estima habitabilidad con un pipeline
-          reproducible.
+          Load a CSV, tune your model, and generate synthetic star systems.
+          Visualize key metrics and estimate habitability with a reproducible
+          pipeline.
         </p>
         <div className="actions">
           <button className="btn primary" onClick={() => setVista("ingresar")}>
-            Comenzar
+            Start
           </button>
           <button className="btn ghost" onClick={() => setVista("hparams")}>
-            Configuración
+            Settings
           </button>
         </div>
         <ul className="hero__bullets" aria-label="Características">
-          <li>⚡ Datos → Modelo → Predicción</li>
-          <li>🧪 Generador de sistemas sintéticos</li>
-          <li>📊 Métricas listas para demo</li>
+          <li>⚡ Data → Model → Prediction</li>
+          <li>🧪 Syntetic Data Generator</li>
+          <li>📊 Demo ready metrics</li>
         </ul>
       </div>
     </section>
@@ -62,10 +61,10 @@ export default function App() {
         </button>
         <div className="navActions">
           <button className="btn" onClick={() => setVista("hparams")}>
-            ⚙️ Ajusta tu modelo
+            ⚙️ Tune your model
           </button>
           <button className="btn primary" onClick={() => setVista("ingresar")}>
-            🚀 Ingresar datos
+            🚀 Classify data
           </button>
         </div>
       </header>
@@ -83,18 +82,18 @@ export default function App() {
             <span className="divider" aria-hidden>
               •
             </span>
-            <span className="badge">Demo técnica</span>
+            <span className="badge">Technical Demo</span>
           </div>
 
           <nav className="footer__links" aria-label="Navegación secundaria">
             <button className="linkLike" onClick={() => setVista("menu")}>
-              Inicio
+              Start
             </button>
             <button className="linkLike" onClick={() => setVista("hparams")}>
-              Hiperparámetros
+              Hyperparameters
             </button>
             <button className="linkLike" onClick={() => setVista("ingresar")}>
-              Ingresar datos
+              Classify data
             </button>
             <a href="https://github.com/" target="_blank" rel="noreferrer">
               GitHub
@@ -103,16 +102,15 @@ export default function App() {
 
           <div className="footer__legal">
             <p className="muted">
-              © {new Date().getFullYear()} ExoScope · Proyecto de detección de
-              exoplanetas —
+              © {new Date().getFullYear()} ExoScope · Exoplanet detection project —
               <span className="muted strong">
                 {" "}
-                Desarrollado para un entorno de hackatón (no oficial de NASA)
+                Developed for a hackathon environment (unofficial NASA)
               </span>
             </p>
             <p className="micro">
-              Este software es para fines demostrativos y de investigación. No
-              representa recomendación científica oficial.
+              This software is for demonstration and research purposes. It does
+              not represent official scientific endorsement.
             </p>
           </div>
         </div>

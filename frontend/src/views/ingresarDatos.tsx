@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Dropdown from "../components/dropdown";
 import { PERFILES } from "../assets/perfiles";
 import "../styles/app.css";
@@ -25,29 +25,23 @@ type ModeloResponse = {
 };
 
 export default function IngresarDatos({ setVista }: Props) {
-  const [modelo, setModelo] = useState<string | null>("Libre (6 campos)");
+  const [modelo, setModelo] = useState<number | null>(null);
   const campos = useMemo<Campo[]>(
-    () => PERFILES[modelo ?? "Libre (6 campos)"] as Campo[],
+    () => PERFILES[modelo ?? 0] as Campo[],
     [modelo]
   );
 
-  const [inputs, setInputs] = useState<string[]>([]);
-  const [payloadPreview, setPayloadPreview] = useState<object | null>(null);
+  const [data, setData] = useState<Record<string, number | null>>({});
+
+  const [payloadPreview, setPayloadPreview] = useState<boolean>(false);
   const [respuesta, setRespuesta] = useState<ModeloResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    setInputs(Array.from({ length: campos.length }, (_, i) => inputs[i] ?? ""));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [campos]);
-
-  const setAt = (i: number, value: string) => {
-    setInputs((prev) => {
-      const next = [...prev];
-      next[i] = value;
-      return next;
-    });
+  const changeData = (key: string, value: string) => {
+    if (isNaN(Number(value))) return;
+    else if (value === "") setData((prev) => ({ ...(prev ?? {}), [key]: null }));
+    else setData((prev) => ({ ...(prev ?? {}), [key]: Number(value) }));
   };
 
   const generarAleatorios = () => {
@@ -57,36 +51,38 @@ export default function IngresarDatos({ setVista }: Props) {
       }
       const val = c.min + Math.random() * (c.max - c.min);
       return (c.decimals ?? 2) === 0
-        ? String(Math.round(val))
+        ? Math.round(val)
         : val.toFixed(c.decimals ?? 2);
     });
-    setInputs(next);
+    setData(() => {
+      const obj: Record<string, number> = {};
+      campos.forEach((c, i) => {
+        obj[c.key] = Number(next[i]);
+      });
+      return obj;
+    });
   };
 
   const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) alert(`CSV seleccionado: ${file.name}`);
+    if (file) alert(`CSV selected: ${file.name}`);
   };
 
   const enviar = async () => {
-    const payload = Object.fromEntries(
-      campos.map((c, i) => [c.key, inputs[i] ?? ""])
-    );
-
-    setPayloadPreview(payload);
+    setPayloadPreview(true);
     setRespuesta(null);
     setErrorMsg(null);
     setLoading(true);
 
-    const API_BASE="http://localhost:8000/api"; // Cambia esto si tu backend está en otra URL
+    const API_BASE = "http://localhost:8000/api"; // Cambia esto si tu backend está en otra URL
     try {
       // 🔁 Cambia esta URL por tu endpoint real
       const res = await fetch(`${API_BASE}/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          modeloSeleccionado: modelo,
-          datos: payload,
+          model: modelo,
+          features: data,
         }),
       });
 
@@ -95,31 +91,31 @@ export default function IngresarDatos({ setVista }: Props) {
         throw new Error(txt || `HTTP ${res.status}`);
       }
 
-      const data: ModeloResponse = await res.json();
-      setRespuesta(data);
+      const resData: ModeloResponse = await res.json();
+      setRespuesta(resData);
     } catch (err: any) {
-      setErrorMsg(err?.message ?? "Error desconocido");
+      setErrorMsg(err?.message ?? "Unknown error");
     } finally {
       setLoading(false);
     }
   };
 
-  const onChangeModelo = (m: string) => setModelo(m);
+  const onChangeModelo = (m: number) => setModelo(m);
 
   return (
     <section className="sectionData">
       <div className="container">
-        <div>Entrada</div>
+        <div>Input</div>
         <div className="header">
           <div className="kicker">
-            <h2>Ingresar Datos</h2>
-            <h2>Selecciona un modelo</h2>
+            <h2>Enter Data</h2>
+            <h2>Select a model</h2>
           </div>
         </div>
 
         <div className="dataRow">
           <div className="panel">
-            <label className="labelData">Cargar CSV</label>
+            <label className="labelData">Upload CSV</label>
 
             <input
               id="csvInput"
@@ -129,26 +125,24 @@ export default function IngresarDatos({ setVista }: Props) {
               style={{ display: "none" }}
             />
             <label htmlFor="csvInput" className="fileSelector">
-              Seleccionar archivo
+              Select file
             </label>
           </div>
 
           <div className="panel">
             <label className="labelData">
-              <strong>Modelo</strong>
+              <strong>Model</strong>
             </label>
             <Dropdown
-              options={Object.keys(PERFILES)}
+              options={["Base"]}
               value={modelo}
               onChange={onChangeModelo}
               onAdd={() => setVista("hparams")}
             />
           </div>
         </div>
-
         <div>
-          <p className="infoText"> Puedes cargar los datos manualmente</p>
-
+          <p className="infoText">You can enter data manually</p>
           <div className="inputsGrid section">
             {campos.map((campo, i) => (
               <div key={campo.key} className="card">
@@ -158,22 +152,10 @@ export default function IngresarDatos({ setVista }: Props) {
                 <input
                   className="input"
                   id={`campo-${i}`}
-                  type={
-                    campo.min !== undefined && campo.max !== undefined
-                      ? "number"
-                      : "text"
-                  }
-                  step={
-                    campo.decimals !== undefined
-                      ? 1 / 10 ** campo.decimals
-                      : undefined
-                  }
-                  min={campo.min}
-                  max={campo.max}
-                  inputMode={campo.min !== undefined ? "decimal" : undefined}
+                  type="number"
                   placeholder={campo.label}
-                  value={inputs[i] ?? ""}
-                  onChange={(e) => setAt(i, e.target.value)}
+                  value={data[campo.key as keyof typeof data] ?? ""}
+                  onChange={(e) => changeData(campo.key, e.target.value)}
                 />
               </div>
             ))}
@@ -182,33 +164,31 @@ export default function IngresarDatos({ setVista }: Props) {
 
         <div className="actions">
           <button className="btn" onClick={generarAleatorios}>
-            🎲 Generar aleatorios
+            🎲 Generate random
           </button>
           <button className="btn primary" onClick={enviar} disabled={loading}>
-            {loading ? "Enviando..." : "Enviar a modelo"}
+            {loading ? "Sending..." : "Send to model"}
           </button>
         </div>
-
         {/* 🔎 PREVIEW de lo enviado y lo recibido */}
         <div className="previewWrap">
           <div className="previewBlock">
             <h4 className="kicker">Payload</h4>
             <pre className="preview">
               {payloadPreview
-                ? JSON.stringify(payloadPreview, null, 2)
-                : "// Presiona 'Enviar a modelo' para ver el payload"}
+                ? JSON.stringify(data, null, 2)
+                : "// Press 'Send to model' to see the payload"}
             </pre>
           </div>
-
           <div className="previewBlock">
-            <h4 className="kicker">Respuesta del modelo</h4>
+            <h4 className="kicker">Model response</h4>
             {errorMsg ? (
               <div className="alert error">⚠️ {errorMsg}</div>
             ) : (
               <pre className="preview">
                 {respuesta
                   ? JSON.stringify(respuesta, null, 2)
-                  : "// Aún no hay respuesta"}
+                  : "// No response yet"}
               </pre>
             )}
           </div>

@@ -46,6 +46,9 @@
   border-radius: var(--radius);
   padding: 18px;
   box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
 }
 
 /* bloque de previsualización */
@@ -93,4 +96,19 @@
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.paramLabel {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--muted);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panelDisabled {
+  opacity: 0.5;
 }

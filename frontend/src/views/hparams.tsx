@@ -3,41 +3,61 @@ import "../styles/app.css";
 import "../styles/hparams.css";
 
 type HParams = {
-  learningRate: number;
-  epochs: number;
-  batchSize: number;
-  optimizer: "adam" | "sgd" | "rmsprop" | "adamw";
-  weightDecay: number; // L2
-  dropout: number; // 0..1
-  seed: number;
-  datasetName?: string;
+  random_state?: number;
+  learning_rate?: number;
+  n_estimators?: number;
+  num_leaves?: number;
+  feature_fraction?: number;
+  lambda_l1?: number;
+  lambda_l2?: number;
 };
 
 type Props = {
   setVista: (v: "menu" | "ingresar" | "hparams") => void;
 };
 
+function Param({ label, value, onChange, remove }: { label: string; value: number | undefined; onChange: (v: number) => void; remove: () => void }) {
+  return (
+    <div className={`panel ${value === undefined ? "panelDisabled" : ""}`}>
+      <label className="paramLabel">
+        {label}
+        <button className="btnClear" onClick={remove}>
+          X
+        </button>
+      </label>
+      <input
+        className="input"
+        type="number"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+    </div>
+  );
+}
+
 export default function Hyperparametros({ setVista }: Props) {
-  const [hp, setHp] = useState<HParams>({
-    learningRate: 0.001,
-    epochs: 20,
-    batchSize: 32,
-    optimizer: "adam",
-    weightDecay: 0.0,
-    dropout: 0.0,
-    seed: 42,
-    datasetName: undefined,
+  const [hp, setHp] = useState<HParams>({ 
+    random_state: 42,
+    learning_rate: 0.05,
+    n_estimators: 2000,
+    num_leaves: 40,
+    feature_fraction: 0.8,
+    lambda_l1: 0.1,
+    lambda_l2: 0.1
   });
 
-  const setVal = <K extends keyof HParams>(k: K, v: HParams[K]) =>
+  const setVal = <K extends keyof HParams>(k: K, v: HParams[K]) => {
     setHp((prev) => ({ ...prev, [k]: v }));
+  }
 
-  const handleDataset = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setVal("datasetName", file.name);
-    alert(`Dataset seleccionado: ${file.name}`);
-  };
+  const deleteVal = <K extends keyof HParams>(k: K) => {
+    setHp((prev) => { 
+      const copy = { ...prev };
+      delete copy[k];
+      return copy;
+    });
+  }
+
 
   const guardar = () => {
     console.log("Hiperparámetros guardados:", hp);
@@ -51,119 +71,57 @@ export default function Hyperparametros({ setVista }: Props) {
           <div className="kicker">Configuración</div>
           <h2>Configura los Hiperparámetros de tu modelo</h2>
         </div>
-        <div className="badge">
-          ⚙️ Optimizer:{" "}
-          <strong style={{ marginLeft: 6 }}>{hp.optimizer}</strong>
-        </div>
       </div>
-
       <div className="formParams">
-        <div className="panel">
-          <label className="label">Learning Rate</label>
-          <input
-            className="input"
-            type="number"
-            step="0.0001"
-            min={0}
-            value={hp.learningRate}
-            onChange={(e) => setVal("learningRate", Number(e.target.value))}
-          />
-        </div>
+        <Param
+          label="Random State"
+          value={hp.random_state}
+          onChange={(v) => setVal("random_state", v)}
+          remove={() => deleteVal("random_state")}
 
-        <div className="panel">
-          <label className="label">Epochs</label>
-          <input
-            className="input"
-            type="number"
-            min={1}
-            value={hp.epochs}
-            onChange={(e) => setVal("epochs", Number(e.target.value))}
-          />
-        </div>
-
-        <div className="panel">
-          <label className="label">Batch Size</label>
-          <input
-            className="input"
-            type="number"
-            min={1}
-            value={hp.batchSize}
-            onChange={(e) => setVal("batchSize", Number(e.target.value))}
-          />
-        </div>
-
-        <div className="panel">
-          <label className="label">Optimizer</label>
-          <select
-            className="input"
-            value={hp.optimizer}
-            onChange={(e) =>
-              setVal("optimizer", e.target.value as HParams["optimizer"])
-            }
-          >
-            <option value="adam">Adam</option>
-            <option value="adamw">AdamW</option>
-            <option value="sgd">SGD</option>
-            <option value="rmsprop">RMSProp</option>
-          </select>
-        </div>
-
-        <div className="panel">
-          <label className="label">Weight Decay (L2)</label>
-          <input
-            className="input"
-            type="number"
-            step="0.0001"
-            min={0}
-            value={hp.weightDecay}
-            onChange={(e) => setVal("weightDecay", Number(e.target.value))}
-          />
-        </div>
-
-        <div className="panel">
-          <label className="label">Dropout (0 a 1)</label>
-          <input
-            className="input"
-            type="number"
-            step="0.01"
-            min={0}
-            max={1}
-            value={hp.dropout}
-            onChange={(e) => setVal("dropout", Number(e.target.value))}
-          />
-        </div>
-
-        <div className="panel">
-          <label className="label">Seed</label>
-          <input
-            className="input"
-            type="number"
-            min={0}
-            value={hp.seed}
-            onChange={(e) => setVal("seed", Number(e.target.value))}
-          />
-        </div>
-
-        <div className="panel">
-          <label className="label">Añadir dataset (entrenamiento)</label>
-          <input
-            className="file"
-            type="file"
-            accept=".csv,.parquet,.jsonl,.json"
-            onChange={handleDataset}
-          />
-          {hp.datasetName && (
-            <small className="muted">Seleccionado: {hp.datasetName}</small>
-          )}
-        </div>
+        />
+        <Param 
+          label="Learning Rate"
+          value={hp.learning_rate}
+          onChange={(v) => setVal("learning_rate", v)}
+          remove={() => deleteVal("learning_rate")}
+        />  
+        <Param
+          label="Num Leaves"
+          value={hp.num_leaves}
+          onChange={(v) => setVal("num_leaves", v)}
+          remove={() => deleteVal("num_leaves")}
+        />
+        <Param
+          label="Nº Estimators"
+          value={hp.n_estimators}
+          onChange={(v) => setVal("n_estimators", v)}
+          remove={() => deleteVal("n_estimators")}
+        />
+        <Param
+          label="Feature Fraction"
+          value={hp.feature_fraction}
+          onChange={(v) => setVal("feature_fraction", v)}
+          remove={() => deleteVal("feature_fraction")}
+        />
+         <Param
+          label="Lambda L1"
+          value={hp.lambda_l1}
+          onChange={(v) => setVal("lambda_l1", v)}
+          remove={() => deleteVal("lambda_l1")}
+        />
+         <Param
+          label="Lambda L2"
+          value={hp.lambda_l2}
+          onChange={(v) => setVal("lambda_l2", v)}
+          remove={() => deleteVal("lambda_l2")}
+        />
       </div>
-
       <div className="actions">
         <button className="btn primary" onClick={guardar}>
           Guardar
         </button>
       </div>
-
       <div className="previewWrap">
         <h4 className="kicker">Preview</h4>
         <pre className="preview">{JSON.stringify(hp, null, 2)}</pre>
