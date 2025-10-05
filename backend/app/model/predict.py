@@ -47,7 +47,7 @@ def predict_candidate(model_path, candidate_features):
     # Interpreta los resultados
     verdict = 'CANDIDATE' if prediction_code == 1 else 'FALSE POSITIVE'
     confidence = prediction_proba[1] if verdict == 'CANDIDATE' else prediction_proba[0]
-    
+
     print("\n--- Veredicto del Modelo ---")
     print(f"Clasificación: {verdict}")
     print(f"Confianza: {confidence * 100:.2f}%")

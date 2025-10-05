@@ -30,14 +30,7 @@ type Model = {
   accuracy: number;
   roc_auc: number;
   pr_auc: number;
-  random_state: number;
-  feature_fraction: number;
-  learning_rate: number;
-  n_estimators: number;
-  num_leaves: number;
-  max_depth: number;
-  lambda_l1: number;
-  lambda_l2: number;
+  model_type: string;
 }
 
 export default function IngresarDatos({ setVista }: Props) {
@@ -193,7 +186,8 @@ export default function IngresarDatos({ setVista }: Props) {
             <p className="infoText">
               Using model: {(models[modelo] as Model).name}
               <br/>
-              <b>Accuracy:</b> {(models[modelo] as Model).accuracy}<br/> <b>ROC AUC:</b> {(models[modelo] as Model).roc_auc}<br/> <b>PR AUC:</b> {(models[modelo] as Model).pr_auc}
+              <b>ML Model: </b> {(models[modelo] as Model).model_type}<br/>
+              <b>Accuracy:</b> {Number.parseFloat((models[modelo] as Model).accuracy.toFixed(4)) * 100}%<br/> <b>ROC AUC:</b> {Number.parseFloat((models[modelo] as Model).roc_auc.toFixed(4)) * 100}%<br/> <b>PR AUC:</b> {((models[modelo] as Model).pr_auc * 100).toFixed(2)}%
             </p>
           )}
           <div className="inputsGrid section">

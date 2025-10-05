@@ -123,6 +123,8 @@ def use_xg_boost_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None)
     y_pred = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:,1]
 
+    accuracy = accuracy_score(y_test, y_pred)
+
     roc_auc = roc_auc_score(y_test, y_proba)
     precision, recall, _ = precision_recall_curve(y_test, y_proba)
     pr_auc = auc(recall, precision)
@@ -142,14 +144,14 @@ def use_xg_boost_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None)
     joblib.dump(model, model_path)
     print(f"\nModelo guardado exitosamente como '{model_filename}'")
 
-    return model_filename, accuray, roc_auc, pr_auc 
+    return model_filename, accuracy, roc_auc, pr_auc 
 
 def use_randomforest_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None) -> Tuple[str, float, float, float]:
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.25, random_state=42, stratify=y
     )
     # n_jobs=-1 usa todos los núcleos de tu CPU para acelerar el entrenamiento
-    model = RandomForestClassifier(**model_params )
+    model = RandomForestClassifier(**model_params)
 
     model.fit(X_train, y_train)
 
@@ -180,7 +182,7 @@ def use_randomforest_model(X: pd.DataFrame, y: pd.Series, model_params: dict = N
 
     model_path = os.path.join(OUTPUTS_PATH, model_filename)
 
-    joblib.dump(model_rf, model_path)
+    joblib.dump(model, model_path)
 
     print(f"\nModelo guardado exitosamente como '{model_filename}'") 
 

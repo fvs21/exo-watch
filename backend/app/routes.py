@@ -15,9 +15,7 @@ def predict(req: PredictRequest):
     if verdict is None or confidence is None:
         raise HTTPException(status_code=500, detail="La predicción falló.")
     
-    print(model_path)
-
-    return {"status": "success", "prediction": {"verdict": verdict, "confidence": confidence}}
+    return {"status": "success", "prediction": {"verdict": verdict, "confidence": float(confidence)}}
 
 @router.post("/model")
 def create_model(req: CreateModelRequest):

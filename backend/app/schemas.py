@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Union, Literal, Annotated
 
 class CandidateFeatures(BaseModel):
     koi_period: float        # Período Orbital
@@ -18,22 +18,61 @@ class PredictRequest(BaseModel):
     model: Optional[int] = Field(None, description="Identificador del modelo (opcional). Vacío significa usar el modelo base.")
     features: CandidateFeatures
 
-class CreateModelRequest(BaseModel):
-    random_state: Optional[int] = None
+# LightGBM Parameters
+class LightGBMParams(BaseModel):
+    model_type: Literal["light_gbm"] = "light_gbm"
     learning_rate: Optional[float] = None
     n_estimators: Optional[int] = None
     num_leaves: Optional[int] = None
     max_depth: Optional[int] = None
-    feature_fraction: Optional[float] = None
     lambda_l1: Optional[float] = None
     lambda_l2: Optional[float] = None
+    feature_fraction: Optional[float] = None
+    random_state: Optional[int] = None
+
+# XGBoost Parameters
+class XGBoostParams(BaseModel):
+    model_type: Literal["xgboost"] = "xgboost"
+    learning_rate: Optional[float] = None
+    n_estimators: Optional[int] = None
+    max_depth: Optional[int] = None
+    subsample: Optional[float] = None
+    colsample_bytree: Optional[float] = None
+    reg_lambda: Optional[float] = None
+    reg_alpha: Optional[float] = None
+    random_state: Optional[int] = None
+
+# Random Forest Parameters
+class RandomForestParams(BaseModel):
+    model_type: Literal["random_forest"] = "random_forest"
+    n_estimators: Optional[int] = None
+    max_depth: Optional[int] = None
+    min_samples_leaf: Optional[int] = None
+    min_samples_split: Optional[int] = None
+    random_state: Optional[int] = None
+
+# Discriminated Union for Create Model Request
+CreateModelRequest = Annotated[
+    Union[LightGBMParams, XGBoostParams, RandomForestParams],
+    Field(discriminator='model_type')
+]
+
+# Response Models
+class LightGBMParamsResponse(LightGBMParams):
+    id: int
+
+class XGBoostParamsResponse(XGBoostParams):
+    id: int
+
+class RandomForestParamsResponse(RandomForestParams):
+    id: int
 
 class Model(BaseModel):
     id: int
     name: str
     path: str
-    learning_rate: Optional[float] = None
-    n_estimators: Optional[int] = None
-    num_leaves: Optional[int] = None
-    max_depth: Optional[int] = None
+    model_type: str
     accuracy: Optional[float] = None
+    roc_auc: Optional[float] = None
+    pr_auc: Optional[float] = None
+    params: Optional[Union[LightGBMParamsResponse, XGBoostParamsResponse, RandomForestParamsResponse]] = None
