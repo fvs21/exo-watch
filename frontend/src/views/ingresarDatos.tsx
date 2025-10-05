@@ -251,13 +251,20 @@ export default function IngresarDatos({ setVista }: Props) {
         {/* 🔎 PREVIEW de lo enviado y lo recibido */}
         <div className="previewWrap">
           <div className="previewBlock">
-            <h4 className="kicker">Payload</h4>
-            <pre className="preview">
-              {payloadPreview
-                ? JSON.stringify(data, null, 2)
-                : "// Press 'Send to model' to see the payload"}
-            </pre>
-          </div>
+  <h4 className="kicker">Payload</h4>
+  {payloadPreview && Object.keys(data).length > 0 ? (
+    <DynamicTable
+      data={Object.entries(data).map(([key, value]) => ({
+        "Característica": key,
+        "Valor": value,
+      }))}
+    />
+  ) : (
+    <pre className="preview">
+      {"// Press 'Send to model' to see the payload"}
+    </pre>
+  )}
+</div>
           <div className="previewBlock">
             <h4 className="kicker">Model response</h4>
 

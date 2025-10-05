@@ -1,5 +1,5 @@
 import React from "react";
-import "../styles/dinamicTables.css"; // Importamos el nuevo archivo CSS
+import "../styles/dinamicTables.css"; // Importamos el archivo CSS actualizado
 
 interface DynamicTableProps {
   data: Record<string, any>[];
@@ -18,6 +18,8 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data }) => {
       <table className="dynamic-table">
         <thead>
           <tr>
+            {/* Columna para la enumeración */}
+            <th>#</th> 
             {headers.map((header) => (
               <th key={header}>
                 {header}
@@ -28,9 +30,10 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data }) => {
         <tbody>
           {data.map((row, i) => (
             <tr key={i}>
+              {/* Celda con el número de fila (índice + 1) */}
+              <td>{i + 1}</td>
               {headers.map((header) => (
                 <td key={header}>
-                  {/* Si el valor no existe o es nulo, muestra 'N/A' */}
                   {row[header] ?? "N/A"}
                 </td>
               ))}

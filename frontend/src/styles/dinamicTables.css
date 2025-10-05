@@ -1,26 +1,34 @@
 .table-container {
   padding: 1rem;
   overflow-x: auto;
+  /* Nuevas propiedades para centrar la tabla */
+  display: flex;
+  justify-content: center;
 }
 
 .dynamic-table {
-  min-width: 100%;
-  border-collapse: collapse; /* Asegura que los bordes se combinen */
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  overflow: hidden; /* Para que el borde redondeado se aplique a la tabla */
+  /* Se cambia min-width por width: auto para que la tabla ocupe solo lo necesario */
+  width: auto;
+  min-width: 300px; /* Un ancho mínimo para que no se vea mal si hay poco contenido */
+  border-collapse: collapse;
+  border-spacing: 0; /* Elimina espacios entre bordes para que el redondeo funcione mejor */
+  border: 0px ; /* Un borde un poco más visible en el tema oscuro */
+  border-radius: 0.75rem; /* Un poco más redondeado */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  overflow: hidden; 
+  color: #e5e7eb; /* Color de texto claro para buen contraste */
 }
 
 .dynamic-table th,
 .dynamic-table td {
-  border: 1px solid #e5e7eb;
-  padding: 0.75rem 1rem; /* Un poco más de padding para mejor legibilidad */
+  border: 1px solid #333;
+  padding: 0.75rem 1.25rem;
   text-align: left;
+  white-space: nowrap; /* Evita que el texto largo rompa el diseño */
 }
 
 .dynamic-table thead {
-  background-color: #171922;
+  background-color: #1f2937; /* Un color de cabecera ligeramente diferente */
 }
 
 .dynamic-table th {
@@ -28,15 +36,16 @@
   text-transform: capitalize;
 }
 
-/* Estilo para las filas alternas (cebreado) */
-.dynamic-table tbody tr:nth-of-type(odd) {
+/* Filas con el mismo fondo oscuro */
+.dynamic-table tbody tr {
   background-color: #171922;
 }
 
-.dynamic-table tbody tr:nth-of-type(even) {
-  background-color: #171922;
+/* Efecto hover para resaltar la fila */
+.dynamic-table tbody tr:hover {
+  background-color: #374151;
 }
 
 .no-data-message {
-  color: #6b7280;
+  color: #9ca3af;
 }
