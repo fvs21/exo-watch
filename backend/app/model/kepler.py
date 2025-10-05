@@ -1,6 +1,7 @@
 import pandas as pd
 import lightgbm as lgb
-from sklearn.model_selection import train_test_split
+import numpy as np
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, precision_recall_curve, auc
 import matplotlib.pyplot as plt
@@ -111,6 +112,70 @@ def use_light_gbm_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None
 
     return model_filename, accuracy, roc_auc, pr_auc
 
+def use_light_gbm_model_cv(X: pd.DataFrame, y: pd.Series, model_params: dict = None, n_splits: int = 5) -> Tuple[str, float, float, float]:
+    # n_splits = número de folds
+    kfold = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
+
+    accuracy = []
+    roc_auc = []
+    pr_auc = []
+
+    # 1. Iterar sobre cada fold
+    for fold, (train_idx, test_idx) in enumerate(kfold.split(X, y)):
+        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+
+        model = lgb.LGBMClassifier(**model_params)
+        model.fit(X_train, y_train)
+
+        y_pred = model.predict(X_test)
+        accuracy.append(accuracy_score(y_test, y_pred))
+
+        y_proba = model.predict_proba(X_test)[:, 1]
+        roc_auc.append(roc_auc_score(y_test, y_proba))
+        precision, recall, _ = precision_recall_curve(y_test, y_proba)
+        pr_auc.append(auc(recall, precision))
+
+        if fold == n_splits - 1:
+            print(f"Fold {fold+1} - Entrenamiento completo!")
+            print("\nReporte de Clasificación:")
+            print(classification_report(y_test, y_pred, target_names=['FALSE POSITIVE', 'CANDIDATE']))
+
+    # 2. Calcular promedio de stats
+    average_accuracy = np.mean(accuracy)
+    average_roc_auc = np.mean(roc_auc)
+    average_pr_auc = np.mean(pr_auc)
+
+    print(f"\nPrecisión del modelo: {average_accuracy * 100:.2f}%")
+    print(f"ROC-AUC: {average_roc_auc:.3f}")
+    print(f"PR-AUC: {average_pr_auc:.3f}")
+
+    # 3. Entrenar el modelo con todos los datos
+    model = lgb.LGBMClassifier(**model_params)
+    model.fit(X, y)
+    print("¡Entrenamiento completo!")
+    
+    # 4. Guardar el modelo entrenado para uso futuro
+    outputs = os.listdir(OUTPUTS_PATH)
+
+    if len(outputs) == 0:
+        model_filename = 'exoplanet_kepler_model_cv.joblib'
+    else:
+        model_filename = f"exoplanet_kepler_model_v{len(outputs)+1}.joblib"
+
+    model_path = os.path.join(OUTPUTS_PATH, model_filename)
+    joblib.dump(model, model_path)
+    print(f"\nModelo guardado exitosamente como '{model_filename}'")
+    
+    # 5. Visualizar la importancia de las características
+    lgb.plot_importance(model, max_num_features=11, figsize=(10, 8), 
+                        title='Importancia de las Características (LightGBM)')
+    plt.tight_layout()
+    plt.savefig('feature_importance_kepler.png')
+    print("Gráfico de importancia de características guardado como 'feature_importance_kepler.png'")
+
+    return model_filename, accuracy, roc_auc, pr_auc
+
 def use_xg_boost_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None) -> Tuple[str, float, float, float]:
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.25, random_state=42, stratify=y
@@ -188,17 +253,19 @@ def use_randomforest_model(X: pd.DataFrame, y: pd.Series, model_params: dict = N
 
     return model_filename, accuracy, roc_auc, pr_auc
 
-def train_and_evaluate_model(model_type: str = "light_gbm", params: dict = None):
+def train_and_evaluate_model(model_type: str = "light_gbm", params: dict = None, n_splits: int = None):
     X, y = load_kepler_data()
     
     if model_type == "light_gbm":
         return use_light_gbm_model(X, y, model_params=params)
+    elif model_type == "light_gbm_cv":
+        return use_light_gbm_model_cv(X, y, model_params=params, n_splits=(n_splits if n_splits else 5))
     elif model_type == "xgboost":
         return use_xg_boost_model(X, y, model_params=params)
     elif model_type == "random_forest":
         return use_randomforest_model(X, y, model_params = params)
     else:
-        raise ValueError("Modelo no soportado. Usa 'light_gbm', 'xgboost' o 'random_forest'.")
+        raise ValueError("Modelo no soportado. Usa 'light_gbm', 'light_gbm_cv', 'xgboost' o 'random_forest'.")
 
 
 def main():
@@ -209,7 +276,7 @@ def main():
         model_to_use = sys.argv[1]
 
     params = None
-    if model_to_use == "light_gbm":
+    if model_to_use == "light_gbm" or model_to_use == "light_gbm_cv":
         params = dict(
             random_state=42,
             learning_rate=0.05,
