@@ -52,12 +52,12 @@ export default function App() {
         <button
           className="brand"
           onClick={() => setVista("menu")}
-          aria-label="ExoScope"
+          aria-label="Exo Watch"
         >
           <span className="logo" aria-hidden>
             ✦
           </span>
-          <span className="brandText">ExoScope</span>
+          <span className="brandText">Exo Watch</span>
         </button>
         <div className="navActions">
           <button className="btn" onClick={() => setVista("hparams")}>
@@ -78,7 +78,7 @@ export default function App() {
             <span className="logo" aria-hidden>
               ✦
             </span>
-            <span className="brandText">ExoScope</span>
+            <span className="brandText">Exo Watch</span>
             <span className="divider" aria-hidden>
               •
             </span>
@@ -102,7 +102,7 @@ export default function App() {
 
           <div className="footer__legal">
             <p className="muted">
-              © {new Date().getFullYear()} ExoScope · Exoplanet detection project —
+              © {new Date().getFullYear()} Exo Watch · Exoplanet detection project —
               <span className="muted strong">
                 {" "}
                 Developed for a hackathon environment (unofficial NASA)
