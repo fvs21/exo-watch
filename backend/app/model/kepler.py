@@ -7,6 +7,7 @@ import joblib
 from typing import Tuple
 import sys
 import xgboost as xgb
+import os
 
 KOI_FEATURES = [
     'koi_period',       # Período Orbital
@@ -22,8 +23,12 @@ KOI_FEATURES = [
     'koi_srad',         # Radio Estelar
 ]
 
+BASE_PATH = os.path.dirname(os.path.dirname(__file__))
+DATA_PATH = os.path.join(BASE_PATH, "data", "raw")
+OUTPUTS_PATH = os.path.join(BASE_PATH, "model", "outputs")
+
 def load_kepler_data() -> Tuple[pd.DataFrame, pd.Series]:
-    filepath = './data/raw/koi.csv' # Asegúrate que la ruta es correcta
+    filepath = os.path.join(DATA_PATH, 'koi.csv')  # Asegúrate que la ruta es correcta
     target_column = 'koi_disposition'
 
     df_raw = pd.read_csv(filepath, skiprows=53)
@@ -55,7 +60,7 @@ def load_kepler_data() -> Tuple[pd.DataFrame, pd.Series]:
     
     return X, y
 
-def use_light_gbm_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None):
+def use_light_gbm_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None) -> Tuple[str, float, float, float]:
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.20, random_state=42, stratify=y
     )
@@ -84,16 +89,26 @@ def use_light_gbm_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None
     print(f"PR-AUC: {pr_auc:.3f}")
     
     # 4. Guardar el modelo entrenado para uso futuro
-    model_filename = 'outputs/exoplanet_kepler_model.joblib'
-    joblib.dump(model, model_filename)
+
+    outputs = os.listdir(OUTPUTS_PATH)
+
+    if len(outputs) == 0:
+        model_filename = 'exoplanet_kepler_model.joblib'
+    else:
+        model_filename = f"exoplanet_kepler_model_v{len(outputs)+1}.joblib"
+
+    model_path = os.path.join(OUTPUTS_PATH, model_filename)
+    joblib.dump(model, model_path)
     print(f"\nModelo guardado exitosamente como '{model_filename}'")
     
-    # 5. Visualizar la importancia de las características
+    '''# 5. Visualizar la importancia de las características
     lgb.plot_importance(model, max_num_features=11, figsize=(10, 8), 
                         title='Importancia de las Características (LightGBM)')
     plt.tight_layout()
     plt.savefig('feature_importance_kepler.png')
-    print("Gráfico de importancia de características guardado como 'feature_importance_kepler.png'")
+    print("Gráfico de importancia de características guardado como 'feature_importance_kepler.png'")'''
+
+    return model_filename, accuracy, roc_auc, pr_auc
 
 def use_xg_boost_model(X: pd.DataFrame, y: pd.Series):
     X_train, X_test, y_train, y_test = train_test_split(
@@ -134,9 +149,9 @@ def train_and_evaluate_model(model_type: str = "light_gbm", params: dict = None)
     X, y = load_kepler_data()
     
     if model_type == "light_gbm":
-        use_light_gbm_model(X, y, model_params=params)
+        return use_light_gbm_model(X, y, model_params=params)
     elif model_type == "xgboost":
-        use_xg_boost_model(X, y, model_params=params)
+        return use_xg_boost_model(X, y, model_params=params)
     else:
         raise ValueError("Modelo no soportado. Usa 'light_gbm' o 'xgboost'.")
 

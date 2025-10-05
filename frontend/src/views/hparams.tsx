@@ -86,8 +86,8 @@ export default function Hyperparametros({ setVista }: Props) {
     <section className="sectionParams">
       <div className="headerParams">
         <div>
-          <div className="kicker">Configuración</div>
-          <h2>Configura los Hiperparámetros de tu modelo</h2>
+          <div className="kicker">Settings</div>
+          <h2>Tune your model</h2>
         </div>
       </div>
       <div className="formParams">

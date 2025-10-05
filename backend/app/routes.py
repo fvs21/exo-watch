@@ -14,6 +14,8 @@ def predict(req: PredictRequest):
 
     if verdict is None or confidence is None:
         raise HTTPException(status_code=500, detail="La predicción falló.")
+    
+    print(model_path)
 
     return {"status": "success", "prediction": {"verdict": verdict, "confidence": confidence}}
 
@@ -29,20 +31,7 @@ def predict_csv(file: UploadFile, model: int = None):
 
     model_path = service.get_model(model)
     
-'''def predict(req: dict):
-    modelo=req.get("modeloSeleccionado")
-    features=req.get("datos")
-
-    if not modelo or not features:
-        raise HTTPException(status_code=400, detail="Faltan datos en la solicitud.")
-    
-    try:
-        modelo_ruta=service.get_model_path(modelo) #obtiene la ruta del modelo basado en el diccionario de los nombres bonitos
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
-    prediction = predict_candidate(modelo_ruta, features)
-    if not prediction:
-        raise HTTPException(status_code=500, detail="La predicción falló.")
-
-    return {"status": "success", "input":features, "prediction": prediction}'''
+@router.get("/models")
+def list_models():
+    models = service.list_models()
+    return {"status": "success", "models": models}
