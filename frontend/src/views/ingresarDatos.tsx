@@ -4,6 +4,7 @@ import { PERFILES } from "../assets/perfiles";
 import "../styles/app.css";
 import "../styles/ingresarDatos.css";
 import LightCurves from "../components/light-curves";
+import DynamicTable from "../components/dynamicTable";
 
 type Props = {
   setVista: (v: "menu" | "ingresar" | "hparams") => void;
@@ -19,6 +20,7 @@ type Campo = {
 
 type ModeloResponse = {
   ok: boolean;
+  status: string;
   prediction?: string | number | boolean;
   score?: number;
   details?: unknown;
@@ -228,17 +230,40 @@ export default function IngresarDatos({ setVista }: Props) {
             </pre>
           </div>
           <div className="previewBlock">
-            <h4 className="kicker">Model response</h4>
-            {errorMsg ? (
-              <div className="alert error">⚠️ {errorMsg}</div>
-            ) : (
-              <pre className="preview">
-                {respuesta
-                  ? JSON.stringify(respuesta, null, 2)
-                  : "// No response yet"}
-              </pre>
-            )}
-          </div>
+  <h4 className="kicker">Model response</h4>
+
+  {errorMsg ? (
+    <div className="alert error">⚠️ {errorMsg}</div>
+  ) : respuesta ? (
+    respuesta.status === "success" ? (
+      // Si la respuesta contiene una lista de predicciones
+      Array.isArray(respuesta.prediction) ? (
+        <DynamicTable
+          data={respuesta.prediction.map((p: any, i: number) => ({
+            id: i + 1,
+            veredicto: p.verdict,
+            confianza: (p.confidence * 100).toFixed(2) + "%",
+          }))}
+        />
+      ) : (
+        // Si es solo una predicción individual
+        <DynamicTable
+          data={[
+            {
+              veredicto: respuesta.prediction,
+              
+            },
+          ]}
+        />
+      )
+    ) : (
+      <div className="alert">⚙️ Procesando...</div>
+    )
+  ) : (
+    <pre className="preview">// No response yet</pre>
+  )}
+</div>
+
           {(data.koi_period && data.koi_duration && data.koi_depth && data.koi_model_snr && data.koi_impact) && (
             <LightCurves
               period={data.koi_period}
