@@ -6,6 +6,7 @@ import {
   modelConfigs, 
   getDefaultParams
 } from "../config/modelConfigs";
+import DynamicTable from "../components/dynamicTable";
 
 type Props = {
   setVista: (v: "menu" | "ingresar" | "hparams") => void;
@@ -75,9 +76,9 @@ export default function Hyperparametros({ setVista }: Props) {
         throw new Error(`Error saving hyperparameters: ${res.statusText}`);
       }
 
-      alert("Hiperparámetros guardados exitosamente.");
+      alert("Hyperparameters saved successfully.");
     } catch (e) {
-      alert("Error al guardar los hiperparámetros.");
+      alert("Error savin hyperparams.");
       console.error(e);
     }
   };
@@ -123,6 +124,7 @@ export default function Hyperparametros({ setVista }: Props) {
             type={paramConfig.type}
           />
         ))}
+        
       </div>
 
       <div className="actions">
@@ -132,7 +134,14 @@ export default function Hyperparametros({ setVista }: Props) {
       </div>
       <div className="previewWrap">
         <h4 className="kicker">Preview</h4>
-        <pre className="preview">{JSON.stringify(hp, null, 2)}</pre>
+        <DynamicTable
+    data={currentConfig.params.map((paramConfig) => ({
+      "Parameter": paramConfig.label,
+      "Value": hp[paramConfig.key] ?? "Not established",
+    }))}
+  />
+) : (
+  <p>No hay parámetros para mostrar.</p>
       </div>
     </section>
   );
