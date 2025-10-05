@@ -127,7 +127,7 @@ export default function Hyperparametros({ setVista }: Props) {
 
       <div className="actions">
         <button className="btn primary" onClick={guardar}>
-          Guardar
+          Save
         </button>
       </div>
       <div className="previewWrap">
