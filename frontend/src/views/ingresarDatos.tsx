@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Dropdown from "../components/dropdown";
 import { PERFILES } from "../assets/perfiles";
 import "../styles/app.css";
@@ -24,12 +24,55 @@ type ModeloResponse = {
   error?: string;
 };
 
+type Model = {
+  id: number;
+  name: string;
+  accuracy: number;
+  roc_auc: number;
+  pr_auc: number;
+  random_state: number;
+  feature_fraction: number;
+  learning_rate: number;
+  n_estimators: number;
+  num_leaves: number;
+  max_depth: number;
+  lambda_l1: number;
+  lambda_l2: number;
+}
+
 export default function IngresarDatos({ setVista }: Props) {
-  const [modelo, setModelo] = useState<number | null>(null);
+  const [modelo, setModelo] = useState<number>(0);
+  const [models, setModels] = useState<(Model | string)[]>(["Base"]);
+  const [isLoadingModels, setIsLoadingModels] = useState<boolean>(false);
+
   const campos = useMemo<Campo[]>(
-    () => PERFILES[modelo ?? 0] as Campo[],
+    () => PERFILES[0] as Campo[],
     [modelo]
   );
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      setIsLoadingModels(true);
+      const API_BASE = "http://localhost:8000/api"; // Cambia esto si tu backend está en otra URL
+      try {
+        const res = await fetch(`${API_BASE}/models`);
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `HTTP ${res.status}`);
+        }
+        const data: { models: Model[] } = await res.json();
+        setModels(["Base", ...data.models]);
+      } catch (err) {
+        console.error("Error fetching models:", err);
+        setModels(["Base"]);
+        setModelo(0);
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+
+    fetchModels();
+  }, []);
 
   const [data, setData] = useState<Record<string, number | null>>({});
 
@@ -81,7 +124,7 @@ export default function IngresarDatos({ setVista }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: modelo,
+          model: modelo == 0 ? null : (models[modelo] as Model).id,
           features: data,
         }),
       });
@@ -102,6 +145,12 @@ export default function IngresarDatos({ setVista }: Props) {
 
   const onChangeModelo = (m: number) => setModelo(m);
 
+  console.log(models);
+  
+
+  if(isLoadingModels)
+    return <></>
+
   return (
     <section className="sectionData">
       <div className="container">
@@ -112,11 +161,9 @@ export default function IngresarDatos({ setVista }: Props) {
             <h2>Select a model</h2>
           </div>
         </div>
-
         <div className="dataRow">
           <div className="panel">
             <label className="labelData">Upload CSV</label>
-
             <input
               id="csvInput"
               type="file"
@@ -128,13 +175,12 @@ export default function IngresarDatos({ setVista }: Props) {
               Select file
             </label>
           </div>
-
           <div className="panel">
             <label className="labelData">
               <strong>Model</strong>
             </label>
             <Dropdown
-              options={["Base"]}
+              options={models.map((m) => typeof m === "string" ? m : m.name)}
               value={modelo}
               onChange={onChangeModelo}
               onAdd={() => setVista("hparams")}
@@ -143,8 +189,15 @@ export default function IngresarDatos({ setVista }: Props) {
         </div>
         <div>
           <p className="infoText">You can enter data manually</p>
+          {(models.length > 1 && modelo > 0) && (
+            <p className="infoText">
+              Using model: {(models[modelo] as Model).name}
+              <br/>
+              <b>Accuracy:</b> {(models[modelo] as Model).accuracy}<br/> <b>ROC AUC:</b> {(models[modelo] as Model).roc_auc}<br/> <b>PR AUC:</b> {(models[modelo] as Model).pr_auc}
+            </p>
+          )}
           <div className="inputsGrid section">
-            {campos.map((campo, i) => (
+            {campos && campos.map((campo, i) => (
               <div key={campo.key} className="card">
                 <label className="labelData" htmlFor={`campo-${i}`}>
                   {campo.label}
@@ -161,7 +214,6 @@ export default function IngresarDatos({ setVista }: Props) {
             ))}
           </div>
         </div>
-
         <div className="actions">
           <button className="btn" onClick={generarAleatorios}>
             🎲 Generate random
