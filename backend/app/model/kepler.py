@@ -190,6 +190,8 @@ def use_randomforest_model(X: pd.DataFrame, y: pd.Series, model_params: dict = N
 
 def train_and_evaluate_model(model_type: str = "light_gbm", params: dict = None):
     X, y = load_kepler_data()
+
+    params = {k: v for k, v in params.items() if v is not None}
     
     if model_type == "light_gbm":
         return use_light_gbm_model(X, y, model_params=params)
