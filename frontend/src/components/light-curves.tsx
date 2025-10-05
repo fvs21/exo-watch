@@ -10,7 +10,7 @@ type Props = {
 }
 
 export default function LightCurves({ period, duration, depth, snr, impact }: Props) {
-    const { phase, flux } = generateLightCurves({ periodDays: period, duration, depthPPM: depth, impact, nPeriods: 1 });
+    const { x, flux } = generateLightCurves({ periodDays: period, durationHours: duration, depthPPM: depth, impact, nPeriods: 1, t0BKJD: 100, returnPhaseUnits: true });
 
     const { sigma } = sigmaFromSNR({ depthPPM: depth, snr, durationHours: duration, periodDays: period });
     const fluxWithNoise = addGaussianNoise(flux, sigma);
@@ -19,7 +19,7 @@ export default function LightCurves({ period, duration, depth, snr, impact }: Pr
         <Plot
             data={[
                 {
-                    x: phase,
+                    x: x,
                     y: fluxWithNoise,
                     type: "scatter",
                     mode: "lines",
