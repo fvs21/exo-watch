@@ -1,4 +1,3 @@
-
 import { sigmaFromSNR, addGaussianNoise, generateLightCurves } from "../graphs/curves";
 import Plot from "react-plotly.js";
 

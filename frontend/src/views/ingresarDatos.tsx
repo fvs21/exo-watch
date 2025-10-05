@@ -4,6 +4,7 @@ import { PERFILES } from "../assets/perfiles";
 import "../styles/app.css";
 import "../styles/ingresarDatos.css";
 import LightCurves from "../components/light-curves";
+import DynamicTable from "../components/dynamicTable";
 
 type Props = {
   setVista: (v: "menu" | "ingresar" | "hparams") => void;
@@ -19,6 +20,7 @@ type Campo = {
 
 type ModeloResponse = {
   ok: boolean;
+  status: string;
   prediction?: string | number | boolean;
   score?: number;
   details?: unknown;
@@ -47,13 +49,10 @@ export default function IngresarDatos({ setVista }: Props) {
   useEffect(() => {
     const fetchModels = async () => {
       setIsLoadingModels(true);
-      const API_BASE = "http://localhost:8000/api"; // Cambia esto si tu backend está en otra URL
+      const API_BASE = "http://localhost:8000/api";
       try {
         const res = await fetch(`${API_BASE}/models`);
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error(await res.text());
         const data: { models: Model[] } = await res.json();
         setModels(["Base", ...data.models]);
       } catch (err) {
@@ -69,11 +68,13 @@ export default function IngresarDatos({ setVista }: Props) {
   }, []);
 
   const [data, setData] = useState<Record<string, number | null>>({});
-
   const [payloadPreview, setPayloadPreview] = useState<boolean>(false);
   const [respuesta, setRespuesta] = useState<ModeloResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  //Nuevo estado para el CSV seleccionado
+  const [selectedCSVFile, setSelectedCSVFile] = useState<File | null>(null);
 
   const changeData = (key: string, value: string) => {
     if (isNaN(Number(value))) return;
@@ -99,35 +100,51 @@ export default function IngresarDatos({ setVista }: Props) {
       return obj;
     });
   };
-
+  
   const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) alert(`CSV selected: ${file.name}`);
+    if (!file) return;
+    setSelectedCSVFile(file);
+    alert(`✅ CSV selected: ${file.name}`);
   };
 
+  // Unifica ambos flujos en un solo botón
   const enviar = async () => {
     setPayloadPreview(true);
     setRespuesta(null);
     setErrorMsg(null);
     setLoading(true);
 
-    const API_BASE = "http://localhost:8000/api"; // Cambia esto si tu backend está en otra URL
-    try {
-      // 🔁 Cambia esta URL por tu endpoint real
-      const res = await fetch(`${API_BASE}/predict`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: modelo == 0 ? null : (models[modelo] as Model).id,
-          features: data,
-        }),
-      });
+    const API_BASE = "http://localhost:8000/api";
 
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || `HTTP ${res.status}`);
+    try {
+      let res: Response;
+
+      if (selectedCSVFile) {
+        // Si hay CSV seleccionado, enviamos a /predict_csv
+        const formData = new FormData();
+        formData.append("file", selectedCSVFile);
+        if (modelo && modelo !== 0 && typeof models[modelo] !== "string") {
+          formData.append("model", String((models[modelo] as Model).id));
+        }
+
+        res = await fetch(`${API_BASE}/predict_csv`, {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        // Si no hay CSV, usamos el endpoint JSON normal
+        res = await fetch(`${API_BASE}/predict`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: modelo == 0 ? null : (models[modelo] as Model).id,
+            features: data,
+          }),
+        });
       }
 
+      if (!res.ok) throw new Error(await res.text());
       const resData: ModeloResponse = await res.json();
       setRespuesta(resData);
     } catch (err: any) {
@@ -166,7 +183,7 @@ export default function IngresarDatos({ setVista }: Props) {
               style={{ display: "none" }}
             />
             <label htmlFor="csvInput" className="fileSelector">
-              Select file
+              {selectedCSVFile ? "✅ File selected" : "Select file"}
             </label>
           </div>
           <div className="panel">
@@ -181,14 +198,16 @@ export default function IngresarDatos({ setVista }: Props) {
             />
           </div>
         </div>
+
         <div>
           <p className="infoText">You can enter data manually</p>
           {(models.length > 1 && modelo > 0) && (
             <p className="infoText">
-              Using model: {(models[modelo] as Model).name}
-              <br/>
-              <b>ML Model: </b> {(models[modelo] as Model).model_type}<br/>
-              <b>Accuracy:</b> {Number.parseFloat((models[modelo] as Model).accuracy.toFixed(4)) * 100}%<br/> <b>ROC AUC:</b> {Number.parseFloat((models[modelo] as Model).roc_auc.toFixed(4)) * 100}%<br/> <b>PR AUC:</b> {((models[modelo] as Model).pr_auc * 100).toFixed(2)}%
+              Using model: {(models[modelo] as Model).name}<br />
+              <b>ML Model:</b> {(models[modelo] as Model).model_type}<br />
+              <b>Accuracy:</b> {(Number((models[modelo] as Model).accuracy) * 100).toFixed(2)}%<br />
+              <b>ROC AUC:</b> {(Number((models[modelo] as Model).roc_auc) * 100).toFixed(2)}%<br />
+              <b>PR AUC:</b> {(Number((models[modelo] as Model).pr_auc) * 100).toFixed(2)}%
             </p>
           )}
           <div className="inputsGrid section">
@@ -209,14 +228,16 @@ export default function IngresarDatos({ setVista }: Props) {
             ))}
           </div>
         </div>
+
         <div className="actions">
           <button className="btn" onClick={generarAleatorios}>
             🎲 Generate random
           </button>
           <button className="btn primary" onClick={enviar} disabled={loading}>
-            {loading ? "Sending..." : "Send to model"}
+            {loading ? "Sending..." : selectedCSVFile ? "Send CSV" : "Send to model"}
           </button>
         </div>
+
         {/* 🔎 PREVIEW de lo enviado y lo recibido */}
         <div className="previewWrap">
           <div className="previewBlock">
@@ -228,17 +249,40 @@ export default function IngresarDatos({ setVista }: Props) {
             </pre>
           </div>
           <div className="previewBlock">
-            <h4 className="kicker">Model response</h4>
-            {errorMsg ? (
-              <div className="alert error">⚠️ {errorMsg}</div>
-            ) : (
-              <pre className="preview">
-                {respuesta
-                  ? JSON.stringify(respuesta, null, 2)
-                  : "// No response yet"}
-              </pre>
-            )}
-          </div>
+  <h4 className="kicker">Model response</h4>
+
+  {errorMsg ? (
+    <div className="alert error">⚠️ {errorMsg}</div>
+  ) : respuesta ? (
+    respuesta.status === "success" ? (
+      // Si la respuesta contiene una lista de predicciones
+      Array.isArray(respuesta.prediction) ? (
+        <DynamicTable
+          data={respuesta.prediction.map((p: any, i: number) => ({
+            id: i + 1,
+            veredicto: p.verdict,
+            confianza: (p.confidence * 100).toFixed(2) + "%",
+          }))}
+        />
+      ) : (
+        // Si es solo una predicción individual
+        <DynamicTable
+          data={[
+            {
+              veredicto: respuesta.prediction,
+              
+            },
+          ]}
+        />
+      )
+    ) : (
+      <div className="alert">⚙️ Procesando...</div>
+    )
+  ) : (
+    <pre className="preview">// No response yet</pre>
+  )}
+</div>
+
           {(data.koi_period && data.koi_duration && data.koi_depth && data.koi_model_snr && data.koi_impact) && (
             <LightCurves
               period={data.koi_period}

@@ -78,12 +78,12 @@ def migrate_database():
     
     # Migrate existing data
     print("Migrating existing data...")
-    cursor.execute("SELECT * FROM model")
+    cursor.execute("SELECT * FROM model_new")
     rows = cursor.fetchall()
     
     for row in rows:
         # Get column names
-        cursor.execute("PRAGMA table_info(model)")
+        cursor.execute("PRAGMA table_info(model_new)")
         columns = [col[1] for col in cursor.fetchall()]
         
         # Create a dict from row data
