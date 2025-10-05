@@ -7,7 +7,7 @@ interface DynamicTableProps {
 
 const DynamicTable: React.FC<DynamicTableProps> = ({ data }) => {
   if (!data || data.length === 0) {
-    return <p className="no-data-message">No hay datos para mostrar.</p>;
+    return <p className="no-data-message">No data to show.</p>;
   }
 
   // Obtener las claves (columnas) desde el primer objeto
