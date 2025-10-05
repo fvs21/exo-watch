@@ -1,3 +1,4 @@
 backend/data
 backend/env
+backend/app/db.sqlite3
 .venv

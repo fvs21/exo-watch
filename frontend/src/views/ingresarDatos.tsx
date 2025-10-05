@@ -3,6 +3,7 @@ import Dropdown from "../components/dropdown";
 import { PERFILES } from "../assets/perfiles";
 import "../styles/app.css";
 import "../styles/ingresarDatos.css";
+import LightCurves from "../components/light-curves";
 
 type Props = {
   setVista: (v: "menu" | "ingresar" | "hparams") => void;
@@ -31,7 +32,7 @@ type Model = {
   roc_auc: number;
   pr_auc: number;
   model_type: string;
-}
+};
 
 export default function IngresarDatos({ setVista }: Props) {
   const [modelo, setModelo] = useState<number>(0);
@@ -138,11 +139,11 @@ export default function IngresarDatos({ setVista }: Props) {
 
   const onChangeModelo = (m: number) => setModelo(m);
 
-  console.log(models);
-  
-
   if(isLoadingModels)
     return <></>
+
+  console.log(data);
+  
 
   return (
     <section className="sectionData">
@@ -238,6 +239,15 @@ export default function IngresarDatos({ setVista }: Props) {
               </pre>
             )}
           </div>
+          {(data.koi_period && data.koi_duration && data.koi_depth && data.koi_model_snr && data.koi_impact) && (
+            <LightCurves
+              period={data.koi_period}
+              duration={data.koi_duration}
+              depth={data.koi_depth}
+              snr={data.koi_model_snr}
+              impact={data.koi_impact}
+            />
+          )}
         </div>
       </div>
     </section>
