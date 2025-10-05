@@ -19,11 +19,12 @@ type Campo = {
 };
 
 type ModeloResponse = {
-  ok: boolean;
+  ok?: boolean;
   status: string;
-  prediction?: string | number | boolean;
-  score?: number;
-  details?: unknown;
+  prediction?: {
+    verdict: string;
+    confidence: number;
+  } | null;
   error?: string;
 };
 
@@ -248,40 +249,34 @@ export default function IngresarDatos({ setVista }: Props) {
                 : "// Press 'Send to model' to see the payload"}
             </pre>
           </div>
-          <div className="previewBlock">
+         
+
+         <div className="previewBlock">
   <h4 className="kicker">Model response</h4>
 
   {errorMsg ? (
     <div className="alert error">⚠️ {errorMsg}</div>
-  ) : respuesta ? (
-    respuesta.status === "success" ? (
-      // Si la respuesta contiene una lista de predicciones
-      Array.isArray(respuesta.prediction) ? (
-        <DynamicTable
-          data={respuesta.prediction.map((p: any, i: number) => ({
-            id: i + 1,
-            veredicto: p.verdict,
-            confianza: (p.confidence * 100).toFixed(2) + "%",
-          }))}
-        />
-      ) : (
-        // Si es solo una predicción individual
-        <DynamicTable
-          data={[
-            {
-              veredicto: respuesta.prediction,
-              
-            },
-          ]}
-        />
-      )
-    ) : (
-      <div className="alert">⚙️ Procesando...</div>
-    )
+  ) : !respuesta ? (
+    <pre className="preview">// Press 'Send to model' to see the payload</pre>
+  ) : respuesta.status !== "success" ? (
+    <div className="alert">⚙️ Procesando...</div>
   ) : (
-    <pre className="preview">// No response yet</pre>
+    <DynamicTable
+      data={[
+        {
+          id: 1,
+          prediction: respuesta.prediction?.verdict ?? "N/A",
+          score:
+            typeof respuesta.prediction?.confidence === "number"
+              ? (respuesta.prediction!.confidence * 100).toFixed(2) + "%"
+              : "N/A",
+        },
+      ]}
+    />
   )}
 </div>
+
+
 
           {(data.koi_period && data.koi_duration && data.koi_depth && data.koi_model_snr && data.koi_impact) && (
             <LightCurves
