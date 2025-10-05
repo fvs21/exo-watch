@@ -81,7 +81,6 @@ export default function IngresarDatos({ setVista }: Props) {
   }, []);
 
   const [data, setData] = useState<Record<string, number | null>>({});
-  const [payloadPreview, setPayloadPreview] = useState<boolean>(false);
   const [respuesta, setRespuesta] = useState<ModeloResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -113,7 +112,7 @@ export default function IngresarDatos({ setVista }: Props) {
       return obj;
     });
   };
-  
+
   const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -123,7 +122,6 @@ export default function IngresarDatos({ setVista }: Props) {
 
   // Unifica ambos flujos en un solo botón
   const enviar = async () => {
-    setPayloadPreview(true);
     setRespuesta(null);
     setErrorMsg(null);
     setLoading(true);
@@ -169,9 +167,9 @@ export default function IngresarDatos({ setVista }: Props) {
 
   const onChangeModelo = (m: number) => setModelo(m);
 
-  if(isLoadingModels)
+  if (isLoadingModels)
     return <></>
-  
+
   return (
     <section className="sectionData">
       <div className="container">
@@ -251,20 +249,22 @@ export default function IngresarDatos({ setVista }: Props) {
         {/* 🔎 PREVIEW de lo enviado y lo recibido */}
         <div className="previewWrap">
           <div className="previewBlock">
-  <h4 className="kicker">Payload</h4>
-  {payloadPreview && Object.keys(data).length > 0 ? (
-    <DynamicTable
-      data={Object.entries(data).map(([key, value]) => ({
-        "Feature": key,
-        "Value": value,
-      }))}
-    />
-  ) : (
-    <pre className="preview">
-      {"// Press 'Send to model' to see the payload"}
-    </pre>
-  )}
-</div>
+            <h4 className="kicker">Payload</h4>
+            {/**
+             * {payloadPreview && Object.keys(data).length > 0 ? (
+              <DynamicTable
+                data={Object.entries(data).map(([key, value]) => ({
+                  "Feature": key,
+                  "Value": value,
+                }))}
+              />
+            ) : (
+              <pre className="preview">
+                {"// Press 'Send to model' to see the payload"}
+              </pre>
+            )}
+             */}
+          </div>
           <div className="previewBlock">
             <h4 className="kicker">Model response</h4>
 
@@ -283,16 +283,16 @@ export default function IngresarDatos({ setVista }: Props) {
                     }))}
                   />
                 ) : // Caso individual: la respuesta tiene 'prediction' que contiene los datos directamente.
-                respuesta.prediction ? (
-                  <DynamicTable
-                    data={[
-                      {
-                        veredict: respuesta.prediction.verdict,
-                        confidence: (respuesta.prediction.confidence * 100).toFixed(2) + "%",
-                      },
-                    ]}
-                  />
-                ) : null
+                  respuesta.prediction ? (
+                    <DynamicTable
+                      data={[
+                        {
+                          veredict: respuesta.prediction.verdict,
+                          confidence: (respuesta.prediction.confidence * 100).toFixed(2) + "%",
+                        },
+                      ]}
+                    />
+                  ) : null
               ) : (
                 <div className="alert">⚙️ Procesando...</div>
               )
@@ -300,18 +300,18 @@ export default function IngresarDatos({ setVista }: Props) {
               <pre className="preview">// No response yet</pre>
             )}
           </div>
-            <div className="table">
-{(data.koi_period && data.koi_duration && data.koi_depth && data.koi_model_snr && data.koi_impact) && (
-            <LightCurves
-              period={data.koi_period}
-              duration={data.koi_duration}
-              depth={data.koi_depth}
-              snr={data.koi_model_snr}
-              impact={data.koi_impact}
-            />
-          )}
-            </div>
-          
+          <div className="table">
+            {(data.koi_period && data.koi_duration && data.koi_depth && data.koi_model_snr && data.koi_impact) && (
+              <LightCurves
+                period={data.koi_period}
+                duration={data.koi_duration}
+                depth={data.koi_depth}
+                snr={data.koi_model_snr}
+                impact={data.koi_impact}
+              />
+            )}
+          </div>
+
         </div>
       </div>
     </section>

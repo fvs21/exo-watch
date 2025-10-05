@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { sigmaFromSNR, addGaussianNoise, generateLightCurves } from "../graphs/curves";
 import Plot from "react-plotly.js";
 
@@ -9,7 +10,7 @@ type Props = {
     impact: number;
 }
 
-export default function LightCurves({ period, duration, depth, snr, impact }: Props) {
+function LightCurves({ period, duration, depth, snr, impact }: Props) {
     const { x, flux } = generateLightCurves({ periodDays: period, durationHours: duration, depthPPM: depth, impact, nPeriods: 1, t0BKJD: 100, returnPhaseUnits: true });
 
     const { sigma } = sigmaFromSNR({ depthPPM: depth, snr, durationHours: duration, periodDays: period });
@@ -32,3 +33,5 @@ export default function LightCurves({ period, duration, depth, snr, impact }: Pr
         />
     );
 }
+
+export default memo(LightCurves);
