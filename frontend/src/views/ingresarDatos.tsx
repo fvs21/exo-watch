@@ -7,7 +7,7 @@ import LightCurves from "../components/light-curves";
 import DynamicTable from "../components/dynamicTable";
 
 type Props = {
-  setVista: (v: "menu" | "ingresar" | "hparams") => void;
+  setVista: (v: "menu" | "input" | "hparams") => void;
 };
 
 type Campo = {
@@ -255,8 +255,8 @@ export default function IngresarDatos({ setVista }: Props) {
   {payloadPreview && Object.keys(data).length > 0 ? (
     <DynamicTable
       data={Object.entries(data).map(([key, value]) => ({
-        "Característica": key,
-        "Valor": value,
+        "Feature": key,
+        "Value": value,
       }))}
     />
   ) : (
@@ -278,8 +278,8 @@ export default function IngresarDatos({ setVista }: Props) {
                   <DynamicTable
                     data={respuesta.predictions.map((p, i) => ({
                       id: i + 1,
-                      veredicto: p.prediction.verdict,
-                      confianza: (p.prediction.confidence * 100).toFixed(2) + "%",
+                      veredict: p.prediction.verdict,
+                      confidence: (p.prediction.confidence * 100).toFixed(2) + "%",
                     }))}
                   />
                 ) : // Caso individual: la respuesta tiene 'prediction' que contiene los datos directamente.
@@ -287,8 +287,8 @@ export default function IngresarDatos({ setVista }: Props) {
                   <DynamicTable
                     data={[
                       {
-                        veredicto: respuesta.prediction.verdict,
-                        confianza: (respuesta.prediction.confidence * 100).toFixed(2) + "%",
+                        veredict: respuesta.prediction.verdict,
+                        confidence: (respuesta.prediction.confidence * 100).toFixed(2) + "%",
                       },
                     ]}
                   />

@@ -78,7 +78,7 @@ export default function Hyperparametros({ setVista }: Props) {
 
       alert("Hyperparameters saved successfully.");
     } catch (e) {
-      alert("Error savin hyperparams.");
+      alert("Error saving hyperparams.");
       console.error(e);
     }
   };
