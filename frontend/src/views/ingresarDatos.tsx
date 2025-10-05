@@ -18,14 +18,26 @@ type Campo = {
   decimals?: number;
 };
 
+// Tipos para la predicción individual y la de CSV
+type Prediction = {
+  verdict: string | number | boolean;
+  confidence: number;
+};
+
+// El objeto que viene en la lista de predicciones del CSV
+type PredictionListItem = {
+  prediction: Prediction;
+};
+
 type ModeloResponse = {
-  ok?: boolean;
+  ok: boolean;
   status: string;
-  prediction?: {
-    verdict: string;
-    confidence: number;
-  } | null;
+  prediction?: Prediction; // Para el caso de una sola predicción
+  predictions?: PredictionListItem[]; // Para el caso del CSV
+  score?: number;
+  details?: unknown;
   error?: string;
+  count?: number;
 };
 
 type Model = {
@@ -159,10 +171,7 @@ export default function IngresarDatos({ setVista }: Props) {
 
   if(isLoadingModels)
     return <></>
-
-  console.log(data);
   
-
   return (
     <section className="sectionData">
       <div className="container">
@@ -249,36 +258,43 @@ export default function IngresarDatos({ setVista }: Props) {
                 : "// Press 'Send to model' to see the payload"}
             </pre>
           </div>
-         
+          <div className="previewBlock">
+            <h4 className="kicker">Model response</h4>
 
-         <div className="previewBlock">
-  <h4 className="kicker">Model response</h4>
-
-  {errorMsg ? (
-    <div className="alert error">⚠️ {errorMsg}</div>
-  ) : !respuesta ? (
-    <pre className="preview">// Press 'Send to model' to see the payload</pre>
-  ) : respuesta.status !== "success" ? (
-    <div className="alert">⚙️ Procesando...</div>
-  ) : (
-    <DynamicTable
-      data={[
-        {
-          id: 1,
-          prediction: respuesta.prediction?.verdict ?? "N/A",
-          score:
-            typeof respuesta.prediction?.confidence === "number"
-              ? (respuesta.prediction!.confidence * 100).toFixed(2) + "%"
-              : "N/A",
-        },
-      ]}
-    />
-  )}
-</div>
-
-
-
-          {(data.koi_period && data.koi_duration && data.koi_depth && data.koi_model_snr && data.koi_impact) && (
+            {errorMsg ? (
+              <div className="alert error">⚠️ {errorMsg}</div>
+            ) : respuesta ? (
+              respuesta.status === "success" ? (
+                // Caso CSV: la respuesta tiene 'predictions', que es una lista.
+                // Cada elemento de la lista tiene una clave 'prediction' que contiene los datos.
+                respuesta.predictions && Array.isArray(respuesta.predictions) ? (
+                  <DynamicTable
+                    data={respuesta.predictions.map((p, i) => ({
+                      id: i + 1,
+                      veredicto: p.prediction.verdict,
+                      confianza: (p.prediction.confidence * 100).toFixed(2) + "%",
+                    }))}
+                  />
+                ) : // Caso individual: la respuesta tiene 'prediction' que contiene los datos directamente.
+                respuesta.prediction ? (
+                  <DynamicTable
+                    data={[
+                      {
+                        veredicto: respuesta.prediction.verdict,
+                        confianza: (respuesta.prediction.confidence * 100).toFixed(2) + "%",
+                      },
+                    ]}
+                  />
+                ) : null
+              ) : (
+                <div className="alert">⚙️ Procesando...</div>
+              )
+            ) : (
+              <pre className="preview">// No response yet</pre>
+            )}
+          </div>
+            <div className="table">
+{(data.koi_period && data.koi_duration && data.koi_depth && data.koi_model_snr && data.koi_impact) && (
             <LightCurves
               period={data.koi_period}
               duration={data.koi_duration}
@@ -287,6 +303,8 @@ export default function IngresarDatos({ setVista }: Props) {
               impact={data.koi_impact}
             />
           )}
+            </div>
+          
         </div>
       </div>
     </section>

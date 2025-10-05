@@ -130,3 +130,9 @@ input[type="number"] {
   align-items: center;
   width: 100%; /* ocupa todo el ancho disponible */
 }
+
+.table{
+  display: flex;
+  padding: 10px;
+  justify-content: center;
+}

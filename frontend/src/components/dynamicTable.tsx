@@ -1,29 +1,37 @@
-// DynamicTable.tsx
-import "../styles/dinamicTables.css";
+import React from "react";
+import "../styles/dinamicTables.css"; // Importamos el nuevo archivo CSS
 
-const DynamicTable = ({ data }: { data: Record<string, any>[] }) => {
-  if (!data || data.length === 0) return <p>No hay datos para mostrar.</p>;
+interface DynamicTableProps {
+  data: Record<string, any>[];
+}
 
+const DynamicTable: React.FC<DynamicTableProps> = ({ data }) => {
+  if (!data || data.length === 0) {
+    return <p className="no-data-message">No hay datos para mostrar.</p>;
+  }
+
+  // Obtener las claves (columnas) desde el primer objeto
   const headers = Object.keys(data[0]);
 
   return (
-    <div className="dynamic-table-container">
+    <div className="table-container">
       <table className="dynamic-table">
         <thead>
-          <tr> 
-            {headers.map((h) => (
-              <th key={h}>{h}</th>
+          <tr>
+            {headers.map((header) => (
+              <th key={header}>
+                {header}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {data.map((row, i) => (
             <tr key={i}>
-              {headers.map((h) => (
-                <td key={h}>
-                  {row[h] === null || row[h] === undefined || isNaN(row[h])
-                    ? "N/A"
-                    : row[h]}
+              {headers.map((header) => (
+                <td key={header}>
+                  {/* Si el valor no existe o es nulo, muestra 'N/A' */}
+                  {row[header] ?? "N/A"}
                 </td>
               ))}
             </tr>
@@ -34,5 +42,4 @@ const DynamicTable = ({ data }: { data: Record<string, any>[] }) => {
   );
 };
 
-// EXPORT por defecto
 export default DynamicTable;

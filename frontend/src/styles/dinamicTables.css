@@ -1,36 +1,42 @@
-/* DynamicTable.css */
-.dynamic-table-container {
+.table-container {
+  padding: 1rem;
   overflow-x: auto;
-  margin: 1rem 0;
 }
 
 .dynamic-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: sans-serif;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  min-width: 100%;
+  border-collapse: collapse; /* Asegura que los bordes se combinen */
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  overflow: hidden; /* Para que el borde redondeado se aplique a la tabla */
 }
 
 .dynamic-table th,
 .dynamic-table td {
-  border: 1px solid #ddd;
-  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem; /* Un poco más de padding para mejor legibilidad */
   text-align: left;
 }
 
+.dynamic-table thead {
+  background-color: #171922;
+}
+
 .dynamic-table th {
-  background-color: #f3f4f6;
   font-weight: 600;
+  text-transform: capitalize;
 }
 
-.dynamic-table tr:nth-child(even) {
-  background-color: #fafafa;
+/* Estilo para las filas alternas (cebreado) */
+.dynamic-table tbody tr:nth-of-type(odd) {
+  background-color: #171922;
 }
 
-.dynamic-table tr:hover {
-  background-color: #f1f5f9;
+.dynamic-table tbody tr:nth-of-type(even) {
+  background-color: #171922;
 }
 
-.dynamic-table td {
-  white-space: nowrap;
+.no-data-message {
+  color: #6b7280;
 }
