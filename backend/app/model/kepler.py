@@ -10,6 +10,7 @@ from typing import Tuple
 import sys
 import xgboost as xgb
 import os
+import catboost as cb
 
 KOI_FEATURES = [
     'koi_period',       # Período Orbital
@@ -368,6 +369,72 @@ def use_randomforest_model_cv(X: pd.DataFrame, y: pd.Series, model_params: dict 
 
     return model_filename, accuracy, roc_auc, pr_auc
 
+def use_catboost_model(X: pd.DataFrame, y: pd.Series, model_params: dict = None) -> Tuple[str, float, float, float]:
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.25, random_state=42, stratify=y
+    )
+    model = cb.CatBoostClassifier(**model_params)
+    model.fit(X_train, y_train, verbose=0)
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Precisión de CatBoost: {accuracy * 100:.2f}%")
+    print(classification_report(y_test, y_pred, target_names=['FALSE POSITIVE', 'CANDIDATE'])) 
+    y_pred_proba = model.predict_proba(X_test)
+    y_proba = y_pred_proba[:, 1]
+    roc_auc = roc_auc_score(y_test, y_proba)
+    precision, recall, _ = precision_recall_curve(y_test, y_proba)
+    pr_auc = auc(recall, precision)
+    print(f"ROC-AUC: {roc_auc:.3f}")
+    print(f"PR-AUC: {pr_auc:.3f}") 
+    outputs = os.listdir(OUTPUTS_PATH)
+    if len(outputs) == 0:
+        model_filename = 'exoplanet_kepler_model_catboost.joblib'
+    else:
+        model_filename = f"exoplanet_kepler_model_v{len(outputs)+1}.joblib"
+    model_path = os.path.join(OUTPUTS_PATH, model_filename)
+    joblib.dump(model, model_path)
+    print(f"\nModelo guardado exitosamente como '{model_filename}'") 
+    return model_filename, accuracy, roc_auc, pr_auc
+
+def use_catboost_model_cv(X: pd.DataFrame, y: pd.Series, model_params: dict = None, n_splits: int = 5) -> Tuple[str, float, float, float]:
+    kfold = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
+    accuracy = []
+    roc_auc = []
+    pr_auc = []
+    for fold, (train_idx, test_idx) in enumerate(kfold.split(X, y)):
+        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+        model = cb.CatBoostClassifier(**model_params)
+        model.fit(X_train, y_train, verbose=0)
+        y_pred = model.predict(X_test)
+        accuracy.append(accuracy_score(y_test, y_pred))
+        y_proba = model.predict_proba(X_test)[:, 1]
+        roc_auc.append(roc_auc_score(y_test, y_proba))
+        precision, recall, _ = precision_recall_curve(y_test, y_proba)
+        pr_auc.append(auc(recall, precision))
+        if fold == n_splits - 1:
+            print(f"Fold {fold+1} - Entrenamiento completo!")
+            print("\nReporte de Clasificación:")
+            print(classification_report(y_test, y_pred, target_names=['FALSE POSITIVE', 'CANDIDATE']))
+    average_accuracy = np.mean(accuracy)
+    average_roc_auc = np.mean(roc_auc)
+    average_pr_auc = np.mean(pr_auc)
+    print(f"\nPrecisión del modelo: {average_accuracy * 100:.2f}%")
+    print(f"ROC-AUC: {average_roc_auc:.3f}")
+    print(f"PR-AUC: {average_pr_auc:.3f}")
+    model = cb.CatBoostClassifier(**model_params)
+    model.fit(X, y, verbose=0)
+    print("¡Entrenamiento completo!")
+    outputs = os.listdir(OUTPUTS_PATH)
+    if len(outputs) == 0:
+        model_filename = 'exoplanet_kepler_model_catboost_cv.joblib'
+    else:
+        model_filename = f"exoplanet_kepler_model_v{len(outputs)+1}.joblib"
+    model_path = os.path.join(OUTPUTS_PATH, model_filename)
+    joblib.dump(model, model_path)
+    print(f"\nModelo guardado exitosamente como '{model_filename}'")
+    return model_filename, accuracy, roc_auc, pr_auc
+
 def train_and_evaluate_model(model_type: str = "light_gbm", params: dict = None, n_splits: int = None):
     X, y = load_kepler_data()
     
@@ -383,6 +450,10 @@ def train_and_evaluate_model(model_type: str = "light_gbm", params: dict = None,
         return use_randomforest_model(X, y, model_params = params)
     elif model_type == "randomforest_cv":
         return use_randomforest_model_cv(X, y, model_params=params, n_splits=(n_splits if n_splits else 5))
+    elif model_type == "catboost":
+        return use_catboost_model(X, y, model_params=params)
+    elif model_type == "catboost_cv":
+        return use_catboost_model_cv(X, y, model_params=params, n_splits=(n_splits if n_splits else 5))
     else:
         raise ValueError("Modelo no soportado. Usa 'light_gbm', 'light_gbm_cv', 'xgboost', 'xgboost_cv', 'random_forest' o 'random_forest_cv'.")
 
@@ -427,6 +498,14 @@ def main():
             min_samples_leaf=5,
             random_state=42,
             n_jobs=-1
+        )
+    elif model_to_use == "catboost" or model_to_use == "catboost_cv":
+        params = dict(
+            iterations=1000,
+            learning_rate=0.03,
+            depth=6,
+            random_seed=42,
+            verbose=0
         )
 
     train_and_evaluate_model(model_type=model_to_use, params=params)
