@@ -54,7 +54,7 @@ git clone https://github.com/fvs21/exo-watch.git
 cd exo-watch
 
 # Install Python dependencies
-pip install -r requirements.txt
+pip install -r ./backend/app/requirements.txt
 
 # Install Node.js dependencies
 npm install
