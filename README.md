@@ -63,8 +63,13 @@ npm install
 ### Run the App
 
 ```bash
-# Start the AI backend (Python)
-python src/main.py
+# Start the backend
+cd backend
+uvicorn app.main:app --reload
+
+#Open another terminal
+#Go to frontend folder
+cd frontend
 
 # Launch the frontend (TypeScript)
 npm run build
