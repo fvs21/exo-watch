@@ -72,8 +72,7 @@ uvicorn app.main:app --reload
 cd frontend
 
 # Launch the frontend (TypeScript)
-npm run build
-npm start
+npm run dev
 ```
 ---
 
